@@ -337,6 +337,7 @@ class LicenseController {
       // {nserie: 'REGV01',uname: 'FELIX'     ,cname: 'FELIX-PC1'},
          {nserie: 'REGV01',uname: 'FELIX'     ,cname: 'FELIX-PC2'},
          {nserie: 'REGV01',uname: 'FELIX'     ,cname: 'FELIX-PC3'},
+         {nserie: 'REGV01',uname: 'RICARDO MELO',  cname: 'RICARDO-PC'},
          {nserie: 'REGV01',uname: 'PLOTAGEM 4',cname: '4-PLOTAGEM'},
          {nserie: 'REGV01',uname: 'ROGERIO BATISTA'   ,cname: 'DESKTOP-J5RQF1S'}
       ]
