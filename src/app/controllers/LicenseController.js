@@ -332,7 +332,6 @@ class LicenseController {
       console.log(nserie, uname, cname)
       const licences =
       [
-         {nserie: 'REGV01',uname: 'FELIX'     ,cname: '5-FELIX'},
          {nserie: 'REGV01',uname: 'FELIX'     ,cname: 'FELIX-PC'},
       // {nserie: 'REGV01',uname: 'FELIX'     ,cname: 'FELIX-PC1'},
          {nserie: 'REGV01',uname: 'FELIX'     ,cname: 'FELIX-PC2'},
@@ -379,7 +378,7 @@ class LicenseController {
    }
    // UPD REGISTRONET
    async updregistronet(req, res) {
-      const {nserie,nome,nomereg,programa,tipo,versao,nserieant,versaoant,serial,dataenv,data,valor,desconto,frete,pago,codrastre,rua,bairro,cidade,uf,cep,cgc,telefone,email,emailcc,obs,} = req.body;
+      const {nserie,nome,nomereg,programa,tipo,versao,nserieant,versaoant,serial,dataenv,data,valor,desconto,frete,pago,codrastre,rua,bairro,cidade,uf,cep,cgc,telefone,email,emailcc,nn,pp,obs,} = req.body;
       const registro = await TBLRegistronet.findByPk(nserie);
       if (registro) {
          await TBLRegistronet.update(
@@ -409,6 +408,8 @@ class LicenseController {
                telefone,
                email,
                emailcc,
+               nn,
+               pp,
                obs,
             },
             { where: { nserie } }
@@ -442,6 +443,8 @@ class LicenseController {
          telefone,
          email,
          emailcc,
+         nn,
+         pp,
          obs,
       });
       return res.json(addRecord);
@@ -486,7 +489,7 @@ class LicenseController {
    }
    // UPD REGISTRO
    async updregistro(req, res) {
-      const { nserie, tipo, versao, cliente, uf, cgc, email, serial, verant } = req.body;
+      const { nserie, tipo, versao, cliente, uf, cgc, email, serial, verant,nn,pp } = req.body;
       const registro = await TBLRegistro.findByPk(nserie);
       if (registro) {
          await TBLRegistro.update(
@@ -500,10 +503,12 @@ class LicenseController {
                email,
                serial,
                verant,
+               nn,
+               pp,
             },
             { where: { nserie } }
          );
-         return res.json({ nserie, tipo, versao, cliente, uf, cgc, email, serial, verant });
+         return res.json({ nserie, tipo, versao, cliente, uf, cgc, email, serial, verant, nn, pp });
       }
 
       const addRecord = await TBLRegistro.create({
@@ -516,6 +521,8 @@ class LicenseController {
          email,
          serial,
          verant,
+         nn,
+         pp,
       });
       return res.json(addRecord);
    }

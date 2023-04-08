@@ -16,6 +16,8 @@ class TBLRegistro extends Model {
             email: Sequelize.STRING,
             serial: Sequelize.STRING,
             verant: Sequelize.STRING,
+            nn: Sequelize.STRING,
+            pp: Sequelize.STRING,
          },
          {
             sequelize,

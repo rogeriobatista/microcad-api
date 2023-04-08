@@ -32,6 +32,8 @@ class TBLRegistronet extends Model {
             telefone: Sequelize.STRING,
             email: Sequelize.STRING,
             emailcc: Sequelize.STRING,
+            nn: Sequelize.STRING,
+            pp: Sequelize.STRING,
             obs: Sequelize.STRING,
          },
          {
