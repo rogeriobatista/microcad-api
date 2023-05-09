@@ -46,7 +46,7 @@ class LicenseController {
          port: 587,
          auth: {
             user: 'microcad.adm@gmail.com',
-            pass: 'jdzmuekmxccfdoqz'
+            pass: 'Autocadx15'
          },
       });
        
