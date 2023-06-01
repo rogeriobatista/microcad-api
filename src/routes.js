@@ -98,4 +98,22 @@ routes.delete('/deletelicense/:id', LicenseController.delete);
 routes.get('/listlicense',          LicenseController.index);
 routes.get('/countlicense',         LicenseController.count);
 //
+/** API Imóveis */
+routes.get('/api/imoveis', LicenseController.getImoveis);
+routes.get('/api/imoveis/:id', LicenseController.getImoveisById);
+routes.post('/api/imoveis', LicenseController.upsertImoveis);
+routes.put('/api/imoveis/:id', LicenseController.upsertImoveis);
+routes.delete('/api/imoveis/:id', LicenseController.deleteImoveis);
+/** API Proprietários */
+routes.get('/api/proprietarios', LicenseController.getProprieta);
+routes.get('/api/proprietarios/:id', LicenseController.getProprietaById);
+routes.post('/api/proprietarios', LicenseController.upsertProprieta);
+routes.put('/api/proprietarios/:id', LicenseController.upsertProprieta);
+routes.delete('/api/proprietarios/:id', LicenseController.deleteProprieta);
+/** API Responsáveis Técnicos */
+routes.get('/api/resptecs', LicenseController.getResptec);
+routes.get('/api/resptecs/:id', LicenseController.getResptecById);
+routes.post('/api/resptecs', LicenseController.upsertResptec);
+routes.put('/api/resptecs/:id', LicenseController.upsertResptec);
+routes.delete('/api/resptecs/:id', LicenseController.deleteResptec);
 export default routes;

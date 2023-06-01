@@ -18,6 +18,9 @@ import TBLRegistro     from '../models/TBLRegistro';
 import TBLRegistronet  from '../models/TBLRegistronet';
 import TBLXemail       from '../models/TBLXemail';
 import TBLXexe         from '../models/TBLXexe';
+import TBXimovel from '../models/TBXimovel';
+import TBXproprieta from '../models/TBXproprieta';
+import TBXresptec from '../models/TBXresptec';
 
 class LicenseController {
 
@@ -921,7 +924,192 @@ class LicenseController {
       const sucess = await TBLRegistro.count();
       return res.json(sucess);
    }
-   //
+
+   /** API Imóveis */
+   
+   async getImoveis(req, res) {
+      const imoveis = await TBXimovel.findAll();
+      if (imoveis) {
+         return res.json(imoveis);
+      }
+      return res.json([]);
+   }
+
+   async getImoveisById(req, res) {
+      const { id } = req.params;
+      const imovel = await TBXimovel.findByPk(id);
+      if (imovel) {
+         return res.json(imovel);
+      }
+      return res.json({});
+   }
+
+   async upsertImoveis(req, res) {
+      const { id } = req.params;
+      const { cpj, imovel, proprieta, cpfpj, matricula, cartorio, codincra, certifica, municipio, estado, comarca, atrt } = req.body;
+      if (id) {
+         await TBXimovel.update(
+            {
+               cpj,
+               imovel,
+               proprieta,
+               cpfpj,
+               matricula,
+               cartorio,
+               codincra,
+               certifica,
+               municipio,
+               estado,
+               comarca,
+               atrt
+            },
+            { where: { id } }
+         );
+
+         return res.json({ cpj, imovel, proprieta, cpfpj, matricula, cartorio, codincra, certifica, municipio, estado, comarca, atrt });
+      }
+
+      const addRecord = await TBXimovel.create({
+         cpj,
+         imovel,
+         proprieta,
+         cpfpj,
+         matricula,
+         cartorio,
+         codincra,
+         certifica,
+         municipio,
+         estado,
+         comarca,
+         atrt
+      });
+
+      return res.json(addRecord);
+   }
+
+   async deleteImoveis(req, res) {
+      const { id } = req.params;
+      const sucess = await TBXimovel.destroy({ where: { id: id } });
+
+      return res.json(sucess);
+   }
+
+   /** API Proprietários */
+
+   async getProprieta(req, res) {
+      const proprietarios = await TBXproprieta.findAll();
+      if (proprietarios) {
+         return res.json(proprietarios);
+      }
+      return res.json([]);
+   }
+
+   async getProprietaById(req, res) {
+      const { id } = req.params;
+      const proprietario = await TBXproprieta.findByPk(id);
+      if (proprietario) {
+         return res.json(proprietario);
+      }
+      return res.json({});
+   }
+
+   async upsertProprieta(req, res) {
+      const { id } = req.params;
+      const { cpj, proprieta, identifica, endereco, cpfpj, conjuge, conjudenti, conjucpf } = req.body;
+      if (id) {
+         await TBXproprieta.update(
+            {
+               cpj,
+               proprieta,
+               identifica,
+               endereco,
+               cpfpj,
+               conjuge,
+               conjudenti,
+               conjucpf
+            },
+            { where: { id } }
+         );
+
+         return res.json({ cpj, proprieta, identifica, endereco, cpfpj, conjuge, conjudenti, conjucpf });
+      }
+
+      const addRecord = await TBXproprieta.create({
+         cpj,
+         proprieta,
+         identifica,
+         endereco,
+         cpfpj,
+         conjuge,
+         conjudenti,
+         conjucpf
+      });
+
+      return res.json(addRecord);
+   }
+
+   async deleteProprieta(req, res) {
+      const { id } = req.params;
+      const sucess = await TBXproprieta.destroy({ where: { id: id } });
+
+      return res.json(sucess);
+   }
+
+   /** API Responsáveis Técnicos */
+
+   async getResptec(req, res) {
+      const responsaveisTecnico = await TBXresptec.findAll();
+      if (responsaveisTecnico) {
+         return res.json(responsaveisTecnico);
+      }
+      return res.json([]);
+   }
+
+   async getResptecById(req, res) {
+      const { id } = req.params;
+      const responsavelTecnico = await TBXresptec.findByPk(id);
+      if (responsavelTecnico) {
+         return res.json(responsavelTecnico);
+      }
+      return res.json({});
+   }
+
+   async upsertResptec(req, res) {
+      const { id } = req.params;
+      const { cpj, respetec, titulo, xcr, ncr } = req.body;
+      if (id) {
+         await TBXresptec.update(
+            {
+               cpj,
+               respetec,
+               titulo,
+               xcr,
+               ncr
+            },
+            { where: { id } }
+         );
+
+         return res.json({ cpj, respetec, titulo, xcr, ncr });
+      }
+
+      const addRecord = await TBXresptec.create({
+         cpj,
+         respetec,
+         titulo,
+         xcr,
+         ncr
+      });
+
+      return res.json(addRecord);
+   }
+
+   async deleteResptec(req, res) {
+      const { id } = req.params;
+      const sucess = await TBXresptec.destroy({ where: { id: id } });
+
+      return res.json(sucess);
+   }
+
 }
 
 export default new LicenseController();
