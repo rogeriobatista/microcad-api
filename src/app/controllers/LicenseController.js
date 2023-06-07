@@ -947,7 +947,7 @@ class LicenseController {
    async upsertImoveis(req, res) {
       const { id } = req.params;
       const { cpj, imovel, proprieta, cpfpj, matricula, cartorio, codincra, certifica, municipio, estado, comarca, atrt } = req.body;
-      if (id) {
+      if (id && id > 0) {
          await TBXimovel.update(
             {
                cpj,
