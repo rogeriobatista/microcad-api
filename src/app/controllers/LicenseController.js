@@ -1017,7 +1017,7 @@ class LicenseController {
    async upsertProprieta(req, res) {
       const { id } = req.params;
       const { cpj, proprieta, identifica, endereco, cpfpj, conjuge, conjudenti, conjucpf } = req.body;
-      if (id) {
+      if (id && id > 0) {
          await TBXproprieta.update(
             {
                cpj,
@@ -1078,7 +1078,7 @@ class LicenseController {
    async upsertResptec(req, res) {
       const { id } = req.params;
       const { cpj, respetec, titulo, xcr, ncr } = req.body;
-      if (id) {
+      if (id && id > 0) {
          await TBXresptec.update(
             {
                cpj,
