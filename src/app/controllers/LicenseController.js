@@ -936,6 +936,14 @@ class LicenseController {
       return res.json([]);
    }
 
+   async searchImoveis(req, res) {
+      const { predicate } = req.params;
+
+      return res.json(await TBXimovel.findAll({
+         where: { 'imovel': { [Op.like]: `%${predicate}%` } }
+      }))
+   }
+
    async getImoveisById(req, res) {
       const { id } = req.params;
       const imovel = await TBXimovel.findByPk(id);
@@ -1005,6 +1013,14 @@ class LicenseController {
       return res.json([]);
    }
 
+   async searchProprietarios(req, res) {
+      const { predicate } = req.params;
+
+      return res.json(await TBXproprieta.findAll({
+         where: { 'proprieta': { [Op.like]: `%${predicate}%` } }
+      }))
+   }
+
    async getProprietaById(req, res) {
       const { id } = req.params;
       const proprietario = await TBXproprieta.findByPk(id);
@@ -1064,6 +1080,14 @@ class LicenseController {
          return res.json(responsaveisTecnico);
       }
       return res.json([]);
+   }
+
+   async searchResptecs(req, res) {
+      const { predicate } = req.params;
+
+      return res.json(await TBXproprieta.findAll({
+         where: { 'respetec': { [Op.like]: `%${predicate}%` } }
+      }))
    }
 
    async getResptecById(req, res) {
