@@ -1085,7 +1085,7 @@ class LicenseController {
    async searchResptecs(req, res) {
       const { predicate } = req.params;
 
-      return res.json(await TBXproprieta.findAll({
+      return res.json(await TBXresptec.findAll({
          where: { 'respetec': { [Op.like]: `%${predicate}%` } }
       }))
    }
