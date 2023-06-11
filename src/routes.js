@@ -101,6 +101,8 @@ routes.get('/countlicense',         LicenseController.count);
 /** API Imóveis */
 routes.get('/api/imoveis/:cpj', LicenseController.getImoveis);
 routes.get('/api/imoveis/search/:cpj/:predicate', LicenseController.searchImoveis);
+routes.get('/api/imoveis/next/:cpj/:id', LicenseController.getNextImoveisById);
+routes.get('/api/imoveis/back/:cpj/:id', LicenseController.getBackImoveisById);
 routes.get('/api/imoveis/:id', LicenseController.getImoveisById);
 routes.post('/api/imoveis', LicenseController.upsertImoveis);
 routes.put('/api/imoveis/:id', LicenseController.upsertImoveis);
@@ -108,6 +110,8 @@ routes.delete('/api/imoveis/:id', LicenseController.deleteImoveis);
 /** API Proprietários */
 routes.get('/api/proprietarios/:cpj', LicenseController.getProprieta);
 routes.get('/api/proprietarios/search/:cpj/:predicate', LicenseController.searchProprietarios);
+routes.get('/api/proprietarios/next/:cpj/:id', LicenseController.getNextProprietaById);
+routes.get('/api/proprietarios/back/:cpj/:id', LicenseController.getBackProprietaById);
 routes.get('/api/proprietarios/:id', LicenseController.getProprietaById);
 routes.post('/api/proprietarios', LicenseController.upsertProprieta);
 routes.put('/api/proprietarios/:id', LicenseController.upsertProprieta);
@@ -115,6 +119,8 @@ routes.delete('/api/proprietarios/:id', LicenseController.deleteProprieta);
 /** API Responsáveis Técnicos */
 routes.get('/api/resptecs/:cpj', LicenseController.getResptec);
 routes.get('/api/resptecs/search/:cpj/:predicate', LicenseController.searchResptecs);
+routes.get('/api/resptecs/next/:cpj/:id', LicenseController.getNextResptecById);
+routes.get('/api/resptecs/back/:cpj/:id', LicenseController.getBackResptecById);
 routes.get('/api/resptecs/:id', LicenseController.getResptecById);
 routes.post('/api/resptecs', LicenseController.upsertResptec);
 routes.put('/api/resptecs/:id', LicenseController.upsertResptec);

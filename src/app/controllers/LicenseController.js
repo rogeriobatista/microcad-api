@@ -945,6 +945,24 @@ class LicenseController {
       }))
    }
 
+   async getNextImoveisById(req, res) {
+      const { cpj, id } = req.params;
+      const imovel = await TBXimovel.findOne({ where: { 'id': { [Op.gt]: id }, cpj } });
+      if (imovel) {
+         return res.json(imovel);
+      }
+      return res.json({});
+   }
+
+   async getBackImoveisById(req, res) {
+      const { cpj, id } = req.params;
+      const imovel = await TBXimovel.findOne({ where: { 'id': { [Op.lt]: id }, cpj } });
+      if (imovel) {
+         return res.json(imovel);
+      }
+      return res.json({});
+   }
+
    async getImoveisById(req, res) {
       const { id } = req.params;
       const imovel = await TBXimovel.findByPk(id);
@@ -1023,6 +1041,24 @@ class LicenseController {
       }))
    }
 
+   async getNextProprietaById(req, res) {
+      const { cpj, id } = req.params;
+      const proprietario = await TBXproprieta.findOne({ where: { 'id': { [Op.gt]: id }, cpj } });
+      if (proprietario) {
+         return res.json(proprietario);
+      }
+      return res.json({});
+   }
+
+   async getBackProprietaById(req, res) {
+      const { cpj, id } = req.params;
+      const proprietario = await TBXproprieta.findOne({ where: { 'id': { [Op.lt]: id }, cpj } });
+      if (proprietario) {
+         return res.json(proprietario);
+      }
+      return res.json({});
+   }
+
    async getProprietaById(req, res) {
       const { id } = req.params;
       const proprietario = await TBXproprieta.findByPk(id);
@@ -1091,6 +1127,24 @@ class LicenseController {
       return res.json(await TBXresptec.findAll({
          where: { 'respetec': { [Op.like]: `%${predicate}%` }, cpj }
       }))
+   }
+
+   async getNextResptecById(req, res) {
+      const { cpj, id } = req.params;
+      const responsavelTecnico = await TBXresptec.findOne({ where: { 'id': { [Op.gt]: id }, cpj } });
+      if (responsavelTecnico) {
+         return res.json(responsavelTecnico);
+      }
+      return res.json({});
+   }
+
+   async getBackResptecById(req, res) {
+      const { cpj, id } = req.params;
+      const responsavelTecnico = await TBXresptec.findOne({ where: { 'id': { [Op.lt]: id }, cpj } });
+      if (responsavelTecnico) {
+         return res.json(responsavelTecnico);
+      }
+      return res.json({});
    }
 
    async getResptecById(req, res) {
