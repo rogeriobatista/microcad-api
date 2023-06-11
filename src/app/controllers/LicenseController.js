@@ -929,7 +929,8 @@ class LicenseController {
    /** API Imóveis */
    
    async getImoveis(req, res) {
-      const imoveis = await TBXimovel.findAll();
+      const { cpj } = req.params
+      const imoveis = await TBXimovel.findAll({ where: { cpj } });
       if (imoveis) {
          return res.json(imoveis);
       }
@@ -937,10 +938,10 @@ class LicenseController {
    }
 
    async searchImoveis(req, res) {
-      const { predicate } = req.params;
+      const { cpj, predicate } = req.params;
 
       return res.json(await TBXimovel.findAll({
-         where: { 'imovel': { [Op.like]: `%${predicate}%` } }
+         where: { 'imovel': { [Op.like]: `%${predicate}%` }, cpj }
       }))
    }
 
@@ -1006,7 +1007,8 @@ class LicenseController {
    /** API Proprietários */
 
    async getProprieta(req, res) {
-      const proprietarios = await TBXproprieta.findAll();
+      const { cpj } = req.params
+      const proprietarios = await TBXproprieta.findAll({ where: { cpj } });
       if (proprietarios) {
          return res.json(proprietarios);
       }
@@ -1014,10 +1016,10 @@ class LicenseController {
    }
 
    async searchProprietarios(req, res) {
-      const { predicate } = req.params;
+      const { cpj, predicate } = req.params;
 
       return res.json(await TBXproprieta.findAll({
-         where: { 'proprieta': { [Op.like]: `%${predicate}%` } }
+         where: { 'proprieta': { [Op.like]: `%${predicate}%` }, cpj }
       }))
    }
 
@@ -1075,7 +1077,8 @@ class LicenseController {
    /** API Responsáveis Técnicos */
 
    async getResptec(req, res) {
-      const responsaveisTecnico = await TBXresptec.findAll();
+      const { cpj } = req.params
+      const responsaveisTecnico = await TBXresptec.findAll({ where: { cpj } });
       if (responsaveisTecnico) {
          return res.json(responsaveisTecnico);
       }
@@ -1083,10 +1086,10 @@ class LicenseController {
    }
 
    async searchResptecs(req, res) {
-      const { predicate } = req.params;
+      const { cpj, predicate } = req.params;
 
       return res.json(await TBXresptec.findAll({
-         where: { 'respetec': { [Op.like]: `%${predicate}%` } }
+         where: { 'respetec': { [Op.like]: `%${predicate}%` }, cpj }
       }))
    }
 
