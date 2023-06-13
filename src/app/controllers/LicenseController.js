@@ -932,7 +932,7 @@ class LicenseController {
       const { cpj } = req.params
       const imoveis = await TBXimovel.findAll({ 
          where: { cpj },
-         order: [ [ col('imovel'), 'DESC'] ]
+         order: [ [ col('imovel'), 'ASC'] ]
       });
       if (imoveis) {
          return res.json(imoveis);
@@ -945,7 +945,7 @@ class LicenseController {
 
       return res.json(await TBXimovel.findAll({
          where: { 'imovel': { [Op.like]: `%${predicate}%` }, cpj },
-         order: [ [ col('imovel'), 'DESC'] ]
+         order: [ [ col('imovel'), 'ASC'] ]
       }))
    }
 
@@ -1037,7 +1037,7 @@ class LicenseController {
       const { cpj } = req.params
       const proprietarios = await TBXproprieta.findAll({
          where: { cpj },
-         order: [ [ col('proprieta'), 'DESC'] ]
+         order: [ [ col('proprieta'), 'ASC'] ]
       });
       if (proprietarios) {
          return res.json(proprietarios);
@@ -1050,7 +1050,7 @@ class LicenseController {
 
       return res.json(await TBXproprieta.findAll({
          where: { 'proprieta': { [Op.like]: `%${predicate}%` }, cpj },
-         order: [ [ col('proprieta'), 'DESC'] ]
+         order: [ [ col('proprieta'), 'ASC'] ]
       }))
    }
 
@@ -1134,7 +1134,7 @@ class LicenseController {
       const { cpj } = req.params
       const responsaveisTecnico = await TBXresptec.findAll({
          where: { cpj },
-         order: [ [ col('respetec'), 'DESC'] ]
+         order: [ [ col('respetec'), 'ASC'] ]
       });
       if (responsaveisTecnico) {
          return res.json(responsaveisTecnico);
@@ -1147,7 +1147,7 @@ class LicenseController {
 
       return res.json(await TBXresptec.findAll({
          where: { 'respetec': { [Op.like]: `%${predicate}%` }, cpj },
-         order: [ [ col('respetec'), 'DESC'] ]
+         order: [ [ col('respetec'), 'ASC'] ]
       }))
    }
 
