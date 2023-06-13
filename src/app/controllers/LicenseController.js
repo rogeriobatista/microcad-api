@@ -998,7 +998,7 @@ class LicenseController {
             { where: { id } }
          );
 
-         return res.json({ cpj, imovel, proprieta, cpfpj, matricula, cartorio, codincra, certifica, municipio, estado, comarca, atrt });
+         return res.json({ Id: id, cpj, imovel, proprieta, cpfpj, matricula, cartorio, codincra, certifica, municipio, estado, comarca, atrt });
       }
 
       const imovelExists = await TBXimovel.count({ where: { imovel } })
@@ -1099,7 +1099,7 @@ class LicenseController {
             { where: { id } }
          );
 
-         return res.json({ cpj, proprieta, identifica, endereco, cpfpj, conjuge, conjudenti, conjucpf });
+         return res.json({ Id: id, cpj, proprieta, identifica, endereco, cpfpj, conjuge, conjudenti, conjucpf });
       }
 
       const proprietarioExists = await TBXproprieta.count({ where: { proprieta } })
@@ -1193,7 +1193,7 @@ class LicenseController {
             { where: { id } }
          );
 
-         return res.json({ cpj, respetec, titulo, xcr, ncr });
+         return res.json({ Id: id, cpj, respetec, titulo, xcr, ncr });
       }
 
       const respetecExists = await TBXresptec.count({ where: { respetec } })
