@@ -998,7 +998,7 @@ class LicenseController {
          return res.json({ Id: id, cpj, imovel, proprieta, cpfpj, matricula, cartorio, codincra, certifica, municipio, estado, comarca, atrt });
       }
 
-      const imovelExists = await TBXimovel.count({ where: { imovel } })
+      const imovelExists = await TBXimovel.count({ where: { imovel, cpj } })
 
       if (imovelExists > 0)
          return res.json({errorMessage: "Imóvel já existe!"}).status(400)
@@ -1096,7 +1096,7 @@ class LicenseController {
          return res.json({ Id: id, cpj, proprieta, identifica, endereco, cpfpj, conjuge, conjudenti, conjucpf });
       }
 
-      const proprietarioExists = await TBXproprieta.count({ where: { proprieta } })
+      const proprietarioExists = await TBXproprieta.count({ where: { proprieta, cpj } })
 
       if (proprietarioExists > 0)
          return res.json({errorMessage: "Proprietário já existe!"}).status(400)
@@ -1187,7 +1187,7 @@ class LicenseController {
          return res.json({ Id: id, cpj, respetec, titulo, xcr, ncr });
       }
 
-      const respetecExists = await TBXresptec.count({ where: { respetec } })
+      const respetecExists = await TBXresptec.count({ where: { respetec, cpj } })
 
       if (respetecExists > 0)
          return res.json({errorMessage: "Responsável Técnico já existe!"}).status(400)
