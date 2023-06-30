@@ -18,9 +18,9 @@ import TBLRegistro     from '../models/TBLRegistro';
 import TBLRegistronet  from '../models/TBLRegistronet';
 import TBLXemail       from '../models/TBLXemail';
 import TBLXexe         from '../models/TBLXexe';
-import TBXimovel from '../models/TBXimovel';
-import TBXproprieta from '../models/TBXproprieta';
-import TBXresptec from '../models/TBXresptec';
+import TBXimovel       from '../models/TBXimovel';
+import TBXproprieta    from '../models/TBXproprieta';
+import TBXresptec      from '../models/TBXresptec';
 
 class LicenseController {
 
@@ -213,6 +213,18 @@ class LicenseController {
              nserie: nserie
          }
      }))
+   }
+   //LISTA REGISTRO
+   async lisregistro(req, res) {
+      const { id1 } = req.params; //cgc
+      const registros = await TBLRegistro.findAll({
+         where: { cgc: id1 }
+      });
+
+      if (registros) {
+         return res.json(registros);
+      }
+      return res.json({});
    }
 
    async registronet(req, res) {
