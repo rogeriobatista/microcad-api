@@ -11,7 +11,7 @@ class TBLRegistro extends Model {
             tipo: Sequelize.STRING,
             versao: Sequelize.STRING,
             cliente: Sequelize.STRING,
-            cidade: Sequelize.STRING,
+            //cidade: Sequelize.STRING,
             uf: Sequelize.STRING,
             cgc: Sequelize.STRING,
             email: Sequelize.STRING,
