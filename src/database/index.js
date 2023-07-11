@@ -14,8 +14,8 @@ import TBLRegistronet  from '../app/models/TBLRegistronet';
 import TBLXemail       from '../app/models/TBLXemail';
 import TBLXexe         from '../app/models/TBLXexe';
 import TBXimovel       from '../app/models/TBXimovel';
-import TBXproprieta       from '../app/models/TBXproprieta';
-import TBXresptec       from '../app/models/TBXresptec';
+import TBXproprieta    from '../app/models/TBXproprieta';
+import TBXresptec      from '../app/models/TBXresptec';
 
 const models = [TBLAtualiza,TBLDadosdat,TBLDadosdatmail,TBLDadosdth,TBLDadosins,TBLDadosins000,TBLDadostxt,TBLNaoreg,TBLRegistro,TBLRegistronet, TBLXemail, TBLXexe, TBXimovel, TBXproprieta, TBXresptec];
 
