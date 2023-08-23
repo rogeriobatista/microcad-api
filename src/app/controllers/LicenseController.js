@@ -352,9 +352,10 @@ class LicenseController {
          {nserie: 'REGV01',uname: 'FELIX'     ,cname: 'FELIX-PC2'},
          {nserie: 'REGV01',uname: 'FELIX'     ,cname: 'FELIX-PC3'},
          {nserie: 'REGV01',uname: 'FELIX'     ,cname: 'FELIX-PC4'},
-         {nserie: 'REGV01',uname: 'RICARDO MELO',  cname: 'RICARDO-PC'},
-         {nserie: 'REGV01',uname: 'PLOTAGEM 4',cname: '4-PLOTAGEM'},
-         {nserie: 'REGV01',uname: 'ROGERIO BATISTA'   ,cname: 'DESKTOP-J5RQF1S'}
+         {nserie: 'REGV01',uname: 'CACOB'       ,cname: 'RICARDO-PC'},
+         {nserie: 'REGV01',uname: 'RICARDO MELO',cname: 'RICARDO-PC'},
+         {nserie: 'REGV01',uname: 'PLOTAGEM 4'  ,cname: '4-PLOTAGEM'},
+         {nserie: 'REGV01',uname: 'ROGERIO BATISTA',cname: 'DESKTOP-J5RQF1S'}
       ]
       const valid = licences.some(x => x.nserie == nserie && x.uname == uname && x.cname == cname)
       return res.json({ valid: valid })
