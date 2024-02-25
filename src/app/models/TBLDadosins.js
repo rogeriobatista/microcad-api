@@ -18,6 +18,7 @@ class TBLDadosins extends Model {
             uhora: Sequelize.STRING,
             chave: Sequelize.STRING,
             nvyy: Sequelize.STRING,
+            cadv: Sequelize.STRING,
          },
          {
             sequelize,

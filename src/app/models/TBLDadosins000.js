@@ -19,6 +19,7 @@ class TBLDadosins000 extends Model {
             totd: Sequelize.INTEGER,
             exe: Sequelize.STRING,
             nvyy: Sequelize.STRING,
+            cadv: Sequelize.STRING,
          },
          {
             sequelize,

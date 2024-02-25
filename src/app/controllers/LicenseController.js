@@ -653,7 +653,7 @@ class LicenseController {
    //
    //DADOSINS
    async updins(req, res) {
-      const {nserie0,uname,cname,ndata,nhora,chave,nvyy} = req.body;
+      const {nserie0,uname,cname,ndata,nhora,chave,nvyy,cadv} = req.body;
       const registro = await TBLDadosins.findOne({
          where: {
             nserie0: nserie0,
@@ -670,6 +670,7 @@ class LicenseController {
             uhora: nhora,           
             chave: registro.chave === 'X' || registro.chave === "5" ? 'X' : chave, 
             nvyy: nvyy,           
+            cadv: cadv,           
          },
             { where: { id: registro.id} }
          );
@@ -686,6 +687,7 @@ class LicenseController {
          uhora: nhora,
          chave: chave,
          nvyy: nvyy,
+         cadv: cadv,
       });
       return res.json(addRecord);
    }
@@ -716,7 +718,7 @@ class LicenseController {
    }
    //DADOSINS000
    async updins000(req, res) {
-      const {nvxx,uname,cname,ndata,nhora,nvyy} = req.body;
+      const {nvxx,uname,cname,ndata,nhora,nvyy,cadv} = req.body;
       const registro = await TBLDadosins000.findOne({ where: {nvxx: nvxx, uname: uname, cname: cname} });
 
       //return res.json(registro)
@@ -760,6 +762,7 @@ class LicenseController {
             totd: diffDays,
             exe: '-',
             nvyy: nvyy,
+            cadv: cadv,
             },
             { where: { id: registro.id} }
          );
@@ -775,12 +778,13 @@ class LicenseController {
          uhora: nhora,
          exe: '-',
          nvyy: nvyy,
+         cadv: cadv,
       });
       return res.json(addRecord);
    }
    //DADOSINS000X
    async updins000X(req, res) {
-      const {nvxx,uname,cname,ndata,nhora,nvyy} = req.body;
+      const {nvxx,uname,cname,ndata,nhora,nvyy,cadv} = req.body;
       const registro = await TBLDadosins000.findOne({ where: {nvxx: nvxx, uname: uname, cname: cname} });
       if (registro) {
          registro.udata = ndata;
@@ -813,6 +817,7 @@ class LicenseController {
             totd: diffDays,
             exe: 'X',
             nvyy: nvyy,
+            cadv: cadv,
          },
             { where: { id: registro.id} }
          );
@@ -828,6 +833,7 @@ class LicenseController {
          uhora: nhora,
          exe: 'X',
          nvyy: nvyy,
+         cadv: cadv,
       });
       return res.json(addRecord);
    }
