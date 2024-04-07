@@ -366,8 +366,8 @@ class LicenseController {
       const {nserie0, uname, cname } = req.query; // nserie0, cname, uname
       const rules = [
          {nserie0:'T279999A',uname:'XXXXX',cname:'XXXXX-PC7',codigo:1,mensagem:'AAA BBB CCC XXXX YYY ZZZ OK1'},
-         {nserie0:'T279999A',uname:'XXXXX',cname:'XXXXX-PC8',codigo:2,mensagem:'OK2'},
-         {nserie0:'T279999A',uname:'XXXXX',cname:'XXXXX-PC9',codigo:3,mensagem:'OK3'}
+         {nserie0:'T289999A',uname:'XXXXX',cname:'XXXXX-PC8',codigo:2,mensagem:'OK2'},
+         {nserie0:'T299999A',uname:'XXXXX',cname:'XXXXX-PC9',codigo:3,mensagem:'OK3'}
       ];
       const response = rules.find(rule => rule.nserie0 == nserie0 && rule.uname == uname && rule.cname == cname);
       if (response) return res.json({ cod: response.codigo, msg: response.mensagem });
@@ -506,7 +506,7 @@ class LicenseController {
    }
    // UPD REGISTRO
    async updregistro(req, res) {
-      const { nserie, tipo, versao, cliente, uf, cgc, email, serial, verant,nn,pp } = req.body;
+      const { nserie, tipo, versao, cliente, cidade, uf, cgc, email, serial, nseant, verant, ndata, nn, pp } = req.body;
       const registro = await TBLRegistro.findByPk(nserie);
       if (registro) {
          await TBLRegistro.update(
@@ -515,18 +515,20 @@ class LicenseController {
                tipo,
                versao,
                cliente,
-               //cidade,
+               cidade,
                uf,
                cgc,
                email,
                serial,
+               nseant,
                verant,
+               ndata,
                nn,
                pp,
             },
             { where: { nserie } }
          );
-         return res.json({ nserie, tipo, versao, cliente, uf, cgc, email, serial, verant, nn, pp });
+         return res.json({ nserie, tipo, versao, cliente, cidade, uf, cgc, email, serial, nseant, verant, ndata, nn, pp });
       }
 
       const addRecord = await TBLRegistro.create({
@@ -534,12 +536,14 @@ class LicenseController {
          tipo,
          versao,
          cliente,
-         //cidade,
+         cidade,
          uf,
          cgc,
          email,
          serial,
+         nseant,
          verant,
+         ndata,
          nn,
          pp,
       });
