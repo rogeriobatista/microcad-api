@@ -68,6 +68,7 @@ routes.get('/apidelregistronet/:id',                   LicenseController.delregi
 routes.get('/apilisregistronet/:id1/:id2',             LicenseController.lisregistronet);
 //
 routes.get('/apiconregistro/:id',                      LicenseController.conregistro);
+routes.get('/apiconregistrova/:id',                    LicenseController.conregistrova);
 routes.post('/apiupdregistro',                         LicenseController.updregistro);
 routes.get('/apidelregistro/:id',                      LicenseController.delregistro);
 routes.get('/apilisregistro/:id1',                     LicenseController.lisregistro);

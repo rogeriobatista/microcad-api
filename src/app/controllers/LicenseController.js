@@ -214,6 +214,7 @@ class LicenseController {
          }
      }))
    }
+
    //LISTA REGISTRO
    async lisregistro(req, res) {
       const { id1 } = req.params; //cgc
@@ -504,6 +505,15 @@ class LicenseController {
       }
       return res.json({});
    }
+
+   // CONSULTA REGISTRO NSEANT
+   async conregistrova(req, res) {
+      const { id } = req.params; //nseant
+      const registros = await TBLRegistro.findOne({where: { nseant: id }});
+      if (registros) {return res.json(registros);}
+      return res.json({});
+   }
+   
    // UPD REGISTRO
    async updregistro(req, res) {
       const { nserie, tipo, versao, cliente, cidade, uf, cgc, email, serial, nseant, verant, ndata, nn, pp } = req.body;
