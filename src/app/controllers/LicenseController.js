@@ -1253,19 +1253,20 @@ class LicenseController {
          eventData = JSON.parse(event.data);
       } catch (err) {
          console.error(err);
-         res.status(400).send(`Webhook error: ${err.message}`);
-         return;
+         return res.status(400).send(`Webhook error: ${err.message}`);
       }
 
       switch (event.eventType) {
          case "wix.ecom.v1.order_payment_status_updated":
             console.log(`wix.ecom.v1.order_payment_status_updated event received with data:`, eventData);
-            res.status(200).send({body: req.body, eventData});
+            return res.status(200).send({body: req.body, eventData});
             break;
          default:
             console.log(`Received unknown event type: ${event.eventType}`);
             break;
       }
+
+      return response.status(200).send();
    }
 
 }
