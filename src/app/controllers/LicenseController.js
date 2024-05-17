@@ -1256,11 +1256,11 @@ class LicenseController {
       let event;
       let eventData;
 
-      console.log({ body: req.body })
-
       try {
-         const rawPayload = jwt.verify(req.body, WIX_PUBLIC_KEY);
-         event = JSON.parse(rawPayload.data);
+         // const rawPayload = jwt.verify(req.body, WIX_PUBLIC_KEY);
+         // event = JSON.parse(rawPayload.data);
+         // eventData = JSON.parse(event.data);
+         event = req.body.data;
          eventData = JSON.parse(event.data);
       } catch (err) {
          console.error(err);
@@ -1269,17 +1269,64 @@ class LicenseController {
 
       switch (event.eventType) {
          case "wix.ecom.v1.order_payment_status_updated":
-            console.log(`wix.ecom.v1.order_payment_status_updated event received with data:`, eventData);
-            return res.status(200).send({body: req.body, eventData});
+            // console.log(`wix.ecom.v1.order_payment_status_updated event received with data:`, eventData);
+
+            const order = eventData.actionEvent.body.order;
+
+            order.lineItems.forEach(() => {
+               createLicense(order);
+            });
+
             break;
          default:
             console.log(`Received unknown event type: ${event.eventType}`);
             break;
       }
 
-      return response.status(200).send();
+      return res.status(200).send();
    }
 
+}
+
+const createLicense = async (order) => {
+
+   const nserie = await getNextNserie();
+
+   const { firstName, lastName } = order.billingInfo.contactDetails;
+
+   const tipo = "A|B";
+   const versao = "V19";
+   const email = order.buyerInfo.email;
+   const cliente = `${firstName} ${lastName}`;
+   const cgc = "CPF|CNPJ";
+
+   return await TBLRegistro.create({
+      nserie,
+      tipo,
+      versao,
+      email,
+      cliente,
+      cgc,
+   });
+}
+
+const getNextNserie = async () => {
+   const { nserie } = await TBLRegistro.findOne({
+      order: [
+         [col('nserie'), 'DESC']
+      ]
+   });
+   const onlyNumbers = nserie.replace(/([^0-9]+)/gi, "");
+   const letter = nserie.replace(/([^a-zA-Z]+)/gi, "");
+   return `${letter}${Number(onlyNumbers) + 1}`;
+}
+
+const getAction = (productId) => {
+   const actions = {
+      "be31f5b4-10cf-7a61-db8c-7d468bbf7583": "create",
+   }
+
+   return actions[productId];
 }
 
 export default new LicenseController();
