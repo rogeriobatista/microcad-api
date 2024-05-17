@@ -6,21 +6,21 @@ import jwt from "jsonwebtoken";
 
 import nodemailer from "nodemailer"
 
-import TBLDadosdat     from '../models/TBLDadosdat';
+import TBLDadosdat from '../models/TBLDadosdat';
 import TBLDadosdatmail from '../models/TBLDadosdatmail';
-import TBLDadosdth     from '../models/TBLDadosdth';
-import TBLDadosins     from '../models/TBLDadosins';
-import TBLDadosins000  from '../models/TBLDadosins000';
-import TBLDadostxt     from '../models/TBLDadostxt';
-import TBLAtualiza     from '../models/TBLAtualiza';
-import TBLNaoreg       from '../models/TBLNaoreg';
-import TBLRegistro     from '../models/TBLRegistro';
-import TBLRegistronet  from '../models/TBLRegistronet';
-import TBLXemail       from '../models/TBLXemail';
-import TBLXexe         from '../models/TBLXexe';
-import TBXimovel       from '../models/TBXimovel';
-import TBXproprieta    from '../models/TBXproprieta';
-import TBXresptec      from '../models/TBXresptec';
+import TBLDadosdth from '../models/TBLDadosdth';
+import TBLDadosins from '../models/TBLDadosins';
+import TBLDadosins000 from '../models/TBLDadosins000';
+import TBLDadostxt from '../models/TBLDadostxt';
+import TBLAtualiza from '../models/TBLAtualiza';
+import TBLNaoreg from '../models/TBLNaoreg';
+import TBLRegistro from '../models/TBLRegistro';
+import TBLRegistronet from '../models/TBLRegistronet';
+import TBLXemail from '../models/TBLXemail';
+import TBLXexe from '../models/TBLXexe';
+import TBXimovel from '../models/TBXimovel';
+import TBXproprieta from '../models/TBXproprieta';
+import TBXresptec from '../models/TBXresptec';
 
 class LicenseController {
 
@@ -29,13 +29,13 @@ class LicenseController {
 
       return res.json(await TBLRegistronet.findAll({
          where: {
-           [Op.or]: [
-              { [ 'email' ]: { [Op.like]: `%${predicate}%` } },
-              { [ 'nome' ]: { [Op.like]: `%${predicate}%` } },
-              { [ 'nserie' ]: { [Op.like]: `%${predicate}%` } },
+            [Op.or]: [
+               { ['email']: { [Op.like]: `%${predicate}%` } },
+               { ['nome']: { [Op.like]: `%${predicate}%` } },
+               { ['nserie']: { [Op.like]: `%${predicate}%` } },
             ],
          }
-       }))
+      }))
    }
    //
    //
@@ -52,7 +52,7 @@ class LicenseController {
             pass: 'cvsqizatsjqelemi'
          },
       });
-       
+
       var mailOptions = {
          from: '"MICROCAD-Computação Grafica e Sistemas" <microcad.adm@gmail.com>',
          to: `${email}, comercial@topocad2000.com.br`,
@@ -67,15 +67,15 @@ class LicenseController {
          Email: >>> ${email} <<< 
          CPF / CNPJ: >>> ${cgc} <<`
       };
-       
-      transporter.sendMail(mailOptions, function(error, info){
-      if (error) {
-         console.log(error);
-         return res.send({status: false})
-      } else {
-         console.log('Email sent: ' + info.response);
-         return res.send({status: true})
-      }
+
+      transporter.sendMail(mailOptions, function (error, info) {
+         if (error) {
+            console.log(error);
+            return res.send({ status: false })
+         } else {
+            console.log('Email sent: ' + info.response);
+            return res.send({ status: true })
+         }
       });
    }
    //
@@ -83,8 +83,8 @@ class LicenseController {
    async dadosdat(req, res) {
       return res.json(await TBLDadosdat.findAll({
          order: [
-            [ col('ndata'), 'DESC'],
-            [ col('nvxx'), 'DESC']
+            [col('ndata'), 'DESC'],
+            [col('nvxx'), 'DESC']
          ]
       }))
    }
@@ -92,24 +92,24 @@ class LicenseController {
    async dadosins(req, res) {
       return res.json(await TBLDadosins.findAll({
          order: [
-            [ col('nserie0'), 'DESC']
+            [col('nserie0'), 'DESC']
          ]
       }))
    }
 
    async updateDadosins(req, res) {
       const { registros } = req.body
-   
+
       if (registros) {
-   
+
          registros.forEach(async item => {
             const { id, chave } = item
             await TBLDadosins.update({ chave: chave }, { where: { id: id } });
          })
-   
+
          return res.json(registros)
       }
-   
+
       return res.json([])
    }
    async deleteDadosins(req, res) {
@@ -117,11 +117,11 @@ class LicenseController {
 
       return res.json(await TBLDadosins.destroy({
          where: {
-             id: id
+            id: id
          }
-     }))
+      }))
    }
-   
+
    async dadosdatmail(req, res) {
       return res.json(await TBLDadosdatmail.findAll())
    }
@@ -129,8 +129,8 @@ class LicenseController {
    async atualiza(req, res) {
       return res.json(await TBLAtualiza.findAll({
          order: [
-            [ col('nvxx'), 'DESC'],
-            [ col('nvxxyy'), 'DESC']
+            [col('nvxx'), 'DESC'],
+            [col('nvxxyy'), 'DESC']
          ]
       }))
    }
@@ -161,13 +161,13 @@ class LicenseController {
          where: {
             nserie0: nserie0
          }
-     }))
+      }))
    }
 
    async dadosins000(req, res) {
       return res.json(await TBLDadosins000.findAll({
          order: [
-            [ col('totd'), 'DESC']
+            [col('totd'), 'DESC']
          ]
       }))
    }
@@ -176,15 +176,15 @@ class LicenseController {
 
       return res.json(await TBLDadosins000.destroy({
          where: {
-             id: id
+            id: id
          }
-     }))
+      }))
    }
 
    async dadostxt(req, res) {
       return res.json(await TBLDadostxt.findAll({
          order: [
-            [ col('ntot'), 'DESC']
+            [col('ntot'), 'DESC']
          ]
       }))
    }
@@ -197,9 +197,9 @@ class LicenseController {
 
       return res.json(await TBLNaoreg.destroy({
          where: {
-             id: id
+            id: id
          }
-     }))
+      }))
    }
 
    async registro(req, res) {
@@ -210,9 +210,9 @@ class LicenseController {
 
       return res.json(await TBLRegistro.destroy({
          where: {
-             nserie: nserie
+            nserie: nserie
          }
-     }))
+      }))
    }
 
    //LISTA REGISTRO
@@ -239,7 +239,7 @@ class LicenseController {
    async xexe(req, res) {
       return res.json(await TBLXexe.findAll({
          order: [
-            [ col('nserie'), 'DESC']
+            [col('nserie'), 'DESC']
          ]
       }))
    }
@@ -249,14 +249,14 @@ class LicenseController {
 
       return res.json(await TBLXexe.destroy({
          where: {
-             id: id
+            id: id
          }
-     }))
+      }))
    }
 
    async listEmails(req, res) {
       return res.json(await TBLXemail.findAll({
-         where: { 
+         where: {
             nserie: {
                [Op.ne]: 'XXXXXXX'
             }
@@ -267,7 +267,7 @@ class LicenseController {
    async getEmail(req, res) {
       const { email } = req.params
       return res.json(await TBLXemail.findOne({
-         where: { 
+         where: {
             email: email
          }
       }))
@@ -278,8 +278,8 @@ class LicenseController {
       function uniqBy(list) {
          let seen = new Set();
          return list.filter(item => {
-             let k = item.email.toLowerCase();
-             return seen.has(k) ? false : seen.add(k);
+            let k = item.email.toLowerCase();
+            return seen.has(k) ? false : seen.add(k);
          });
       }
 
@@ -290,10 +290,10 @@ class LicenseController {
 
          const updatedEmails = []
 
-         const promises = uniqBy(emails).map(async(item) => {
+         const promises = uniqBy(emails).map(async (item) => {
             const { nserie, email, data, origem } = item;
 
-            const emailsExists = await TBLXemail.findOne({where: { email: email }})
+            const emailsExists = await TBLXemail.findOne({ where: { email: email } })
 
             if (origem === 'Registronet' && emailsExists && emailsExists.nserie !== 'XXXXXXX' && emailsExists.nserie !== nserie) {
                updatedEmails.push(item)
@@ -322,15 +322,14 @@ class LicenseController {
          emails.forEach(async item => {
 
             const { id, nserie, email, data } = item;
-            
-            const emailExists = await TBLXemail.findOne({where: { email: email }})
+
+            const emailExists = await TBLXemail.findOne({ where: { email: email } })
 
             if (emailExists && emailExists.nserie !== 'XXXXXXX') {
                await TBLXemail.update({ nserie, email, data }, { where: { email: email } });
             }
-            
-            if (!emailExists)
-            {
+
+            if (!emailExists) {
                await TBLXemail.create({ nserie: nserie, email: email, data: data });
             }
          })
@@ -344,35 +343,35 @@ class LicenseController {
    //
    //MICROCAD
    async microcad(req, res) {
-      const {nserie, uname, cname } = req.query
+      const { nserie, uname, cname } = req.query
       console.log(nserie, uname, cname)
       const licences =
-      [
-         {nserie: 'REGV01',uname: 'FELIX'     ,cname: 'FELIX-PC'},
-      // {nserie: 'REGV01',uname: 'FELIX'     ,cname: 'FELIX-PC1'},
-         {nserie: 'REGV01',uname: 'FELIX'     ,cname: 'FELIX-PC2'},
-         {nserie: 'REGV01',uname: 'FELIX'     ,cname: 'FELIX-PC3'},
-         {nserie: 'REGV01',uname: 'FELIX'     ,cname: 'FELIX-PC4'},
-         {nserie: 'REGV01',uname: 'CACOB'       ,cname: 'RICARDO-PC'},
-         {nserie: 'REGV01',uname: 'RICARDO MELO',cname: 'RICARDO-PC'},
-         {nserie: 'REGV01',uname: 'PLOTAGEM 4'  ,cname: '4-PLOTAGEM'},
-         {nserie: 'REGV01',uname: 'ROGERIO BATISTA',cname: 'DESKTOP-J5RQF1S'}
-      ]
+         [
+            { nserie: 'REGV01', uname: 'FELIX', cname: 'FELIX-PC' },
+            // {nserie: 'REGV01',uname: 'FELIX'     ,cname: 'FELIX-PC1'},
+            { nserie: 'REGV01', uname: 'FELIX', cname: 'FELIX-PC2' },
+            { nserie: 'REGV01', uname: 'FELIX', cname: 'FELIX-PC3' },
+            { nserie: 'REGV01', uname: 'FELIX', cname: 'FELIX-PC4' },
+            { nserie: 'REGV01', uname: 'CACOB', cname: 'RICARDO-PC' },
+            { nserie: 'REGV01', uname: 'RICARDO MELO', cname: 'RICARDO-PC' },
+            { nserie: 'REGV01', uname: 'PLOTAGEM 4', cname: '4-PLOTAGEM' },
+            { nserie: 'REGV01', uname: 'ROGERIO BATISTA', cname: 'DESKTOP-J5RQF1S' }
+         ]
       const valid = licences.some(x => x.nserie == nserie && x.uname == uname && x.cname == cname)
       return res.json({ valid: valid })
    }
    //
    //MICROCADUSU
    async microcadusu(req, res) {
-      const {nserie0, uname, cname } = req.query; // nserie0, cname, uname
+      const { nserie0, uname, cname } = req.query; // nserie0, cname, uname
       const rules = [
-         {nserie0:'T279999A',uname:'XXXXX',cname:'XXXXX-PC7',codigo:1,mensagem:'AAA BBB CCC XXXX YYY ZZZ OK1'},
-         {nserie0:'T289999A',uname:'XXXXX',cname:'XXXXX-PC8',codigo:2,mensagem:'OK2'},
-         {nserie0:'T299999A',uname:'XXXXX',cname:'XXXXX-PC9',codigo:3,mensagem:'OK3'}
+         { nserie0: 'T279999A', uname: 'XXXXX', cname: 'XXXXX-PC7', codigo: 1, mensagem: 'AAA BBB CCC XXXX YYY ZZZ OK1' },
+         { nserie0: 'T289999A', uname: 'XXXXX', cname: 'XXXXX-PC8', codigo: 2, mensagem: 'OK2' },
+         { nserie0: 'T299999A', uname: 'XXXXX', cname: 'XXXXX-PC9', codigo: 3, mensagem: 'OK3' }
       ];
       const response = rules.find(rule => rule.nserie0 == nserie0 && rule.uname == uname && rule.cname == cname);
       if (response) return res.json({ cod: response.codigo, msg: response.mensagem });
-      return res.json({cod: 0, msg: 'OK'});
+      return res.json({ cod: 0, msg: 'OK' });
    }
    //
    // CONSULTA REGISTRONET
@@ -387,7 +386,7 @@ class LicenseController {
    // CONSULTA REGISTRONET ULTIMO
    async conregistronetultimo(req, res) {
       const registro = await TBLRegistronet.findOne({
-         order: [ [ 'nserie', 'DESC' ]]
+         order: [['nserie', 'DESC']]
       });
       if (registro) {
          return res.json(registro);
@@ -396,7 +395,7 @@ class LicenseController {
    }
    // UPD REGISTRONET
    async updregistronet(req, res) {
-      const {nserie,nome,nomereg,programa,tipo,versao,nserieant,versaoant,serial,dataenv,data,valor,desconto,frete,pago,codrastre,rua,bairro,cidade,uf,cep,cgc,telefone,email,emailcc,nn,pp,obs,} = req.body;
+      const { nserie, nome, nomereg, programa, tipo, versao, nserieant, versaoant, serial, dataenv, data, valor, desconto, frete, pago, codrastre, rua, bairro, cidade, uf, cep, cgc, telefone, email, emailcc, nn, pp, obs, } = req.body;
       const registro = await TBLRegistronet.findByPk(nserie);
       if (registro) {
          await TBLRegistronet.update(
@@ -480,12 +479,12 @@ class LicenseController {
       // id2 = o que foi digitado
       const registros = await TBLRegistronet.findAll({
          where: {
-                  [Op.or]: [
-                     { [`${id1}`]: { [Op.like]: `%${id2}%` } },
-                  ],
+            [Op.or]: [
+               { [`${id1}`]: { [Op.like]: `%${id2}%` } },
+            ],
          },
          order: [
-            [ col(id1), 'ASC']
+            [col(id1), 'ASC']
          ]
       });
 
@@ -509,11 +508,11 @@ class LicenseController {
    // CONSULTA REGISTRO NSEANT
    async conregistrova(req, res) {
       const { id } = req.params; //nseant
-      const registros = await TBLRegistro.findOne({where: { nseant: id }});
-      if (registros) {return res.json(registros);}
+      const registros = await TBLRegistro.findOne({ where: { nseant: id } });
+      if (registros) { return res.json(registros); }
       return res.json({});
    }
-   
+
    // UPD REGISTRO
    async updregistro(req, res) {
       const { nserie, tipo, versao, cliente, cidade, uf, cgc, email, serial, nseant, verant, ndata, nn, pp } = req.body;
@@ -584,13 +583,12 @@ class LicenseController {
       return res.json("*** NÃO ENCONTRADO ***");
    }
    //
-    // LOGIN
+   // LOGIN
    async login(req, res) {
-      const {login,pass}=req.body;
-      if (!!login && !!pass && login == 'testefixo' && pass == "87654321")
-      {
-         const token=jwt.sign({login:login,pass:pass},'12345678')
-         return  res.json({token:token});
+      const { login, pass } = req.body;
+      if (!!login && !!pass && login == 'testefixo' && pass == "87654321") {
+         const token = jwt.sign({ login: login, pass: pass }, '12345678')
+         return res.json({ token: token });
       }
       return res.sendStatus(400);
    }
@@ -598,21 +596,21 @@ class LicenseController {
 
    //DADOSDAT
    async upddat(req, res) {
-      const {nvxx,ndata} = req.body;
+      const { nvxx, ndata } = req.body;
       const ndata4 = ndata.substring(0, 4);
       const registro = await TBLDadosdat.findOne({
          where: {
             nvxx: nvxx,
             ndata: ndata4
          }
-       });
+      });
 
       if (registro) {
          registro.ntot = registro.ntot + 1;
          await TBLDadosdat.update({
             ntot: registro.ntot
          },
-            { where: { id: registro.id} }
+            { where: { id: registro.id } }
          );
          return res.json(registro);
       }
@@ -628,7 +626,7 @@ class LicenseController {
       const { id1, id2, id3 } = req.params; // nmail, ndata, nhora
       const registro = await TBLDadosdatmail.findByPk(id1);
       if (registro) {
-         return res.json({ id1});
+         return res.json({ id1 });
       }
       const addRecord = await TBLDadosdatmail.create({
          nmail: id1,
@@ -667,7 +665,7 @@ class LicenseController {
    //
    //DADOSINS
    async updins(req, res) {
-      const {nserie0,uname,cname,ndata,nhora,chave,nvyy,cadv} = req.body;
+      const { nserie0, uname, cname, ndata, nhora, chave, nvyy, cadv } = req.body;
       const registro = await TBLDadosins.findOne({
          where: {
             nserie0: nserie0,
@@ -681,12 +679,12 @@ class LicenseController {
          registro.uhora = nhora;
          await TBLDadosins.update({
             udata: ndata,
-            uhora: nhora,           
-            chave: registro.chave === 'X' || registro.chave === "5" ? 'X' : chave, 
-            nvyy: nvyy,           
-            cadv: cadv,           
+            uhora: nhora,
+            chave: registro.chave === 'X' || registro.chave === "5" ? 'X' : chave,
+            nvyy: nvyy,
+            cadv: cadv,
          },
-            { where: { id: registro.id} }
+            { where: { id: registro.id } }
          );
          return res.json(registro);
       }
@@ -719,8 +717,8 @@ class LicenseController {
    }
    //DELETA DADOSINS
    async delins(req, res) {
-      const {nserie0, uname,cname} = req.body; // nserie0, uname, cname
-      const sucess = await TBLDadosins.destroy({ where: {nserie0: nserie0, uname: uname, cname: cname} });
+      const { nserie0, uname, cname } = req.body; // nserie0, uname, cname
+      const sucess = await TBLDadosins.destroy({ where: { nserie0: nserie0, uname: uname, cname: cname } });
       return res.json(sucess);
    }
    //
@@ -732,8 +730,8 @@ class LicenseController {
    }
    //DADOSINS000
    async updins000(req, res) {
-      const {nvxx,uname,cname,ndata,nhora,nvyy,cadv} = req.body;
-      const registro = await TBLDadosins000.findOne({ where: {nvxx: nvxx, uname: uname, cname: cname} });
+      const { nvxx, uname, cname, ndata, nhora, nvyy, cadv } = req.body;
+      const registro = await TBLDadosins000.findOne({ where: { nvxx: nvxx, uname: uname, cname: cname } });
 
       //return res.json(registro)
 
@@ -743,15 +741,15 @@ class LicenseController {
 
          const idata = registro.ndata;
          const ihora = registro.nhora;
-         const idataFormatada = `${idata.substring(2,4)}/${idata.substring(4,6)}/${idata.substring(0,2)}`
-         const ihoraFormatada = `${ihora.substring(0,2)}:${ihora.substring(2,4)}:${ihora.substring(4,6)}`
+         const idataFormatada = `${idata.substring(2, 4)}/${idata.substring(4, 6)}/${idata.substring(0, 2)}`
+         const ihoraFormatada = `${ihora.substring(0, 2)}:${ihora.substring(2, 4)}:${ihora.substring(4, 6)}`
          const idatacompleta = new Date(`${idataFormatada} ${ihoraFormatada}`)
          //console.log(idatacompleta + " <<< IDATA COMPLETA");
 
          const udata = ndata;
          const uhora = nhora;
-         const udataFormatada = `${udata.substring(2,4)}/${udata.substring(4,6)}/${udata.substring(0,2)}`
-         const uhoraFormatada = `${uhora.substring(0,2)}:${uhora.substring(2,4)}:${uhora.substring(4,6)}`
+         const udataFormatada = `${udata.substring(2, 4)}/${udata.substring(4, 6)}/${udata.substring(0, 2)}`
+         const uhoraFormatada = `${uhora.substring(0, 2)}:${uhora.substring(2, 4)}:${uhora.substring(4, 6)}`
          const udatacompleta = new Date(`${udataFormatada} ${uhoraFormatada}`)
          //console.log(udatacompleta + " <<< UDATA COMPLETA");
 
@@ -777,8 +775,8 @@ class LicenseController {
             exe: '-',
             nvyy: nvyy,
             cadv: cadv,
-            },
-            { where: { id: registro.id} }
+         },
+            { where: { id: registro.id } }
          );
          return res.json(registro);
       }
@@ -798,23 +796,23 @@ class LicenseController {
    }
    //DADOSINS000X
    async updins000X(req, res) {
-      const {nvxx,uname,cname,ndata,nhora,nvyy,cadv} = req.body;
-      const registro = await TBLDadosins000.findOne({ where: {nvxx: nvxx, uname: uname, cname: cname} });
+      const { nvxx, uname, cname, ndata, nhora, nvyy, cadv } = req.body;
+      const registro = await TBLDadosins000.findOne({ where: { nvxx: nvxx, uname: uname, cname: cname } });
       if (registro) {
          registro.udata = ndata;
          registro.uhora = nhora;
 
          const idata = registro.ndata;
          const ihora = registro.nhora;
-         const idataFormatada = `${idata.substring(2,4)}/${idata.substring(4,6)}/${idata.substring(0,2)}`
-         const ihoraFormatada = `${ihora.substring(0,2)}:${ihora.substring(2,4)}:${ihora.substring(4,6)}`
+         const idataFormatada = `${idata.substring(2, 4)}/${idata.substring(4, 6)}/${idata.substring(0, 2)}`
+         const ihoraFormatada = `${ihora.substring(0, 2)}:${ihora.substring(2, 4)}:${ihora.substring(4, 6)}`
          const idatacompleta = new Date(`${idataFormatada} ${ihoraFormatada}`)
          //console.log(idatacompleta + " <<< IDATA COMPLETA");
 
          const udata = ndata;
          const uhora = nhora;
-         const udataFormatada = `${udata.substring(2,4)}/${udata.substring(4,6)}/${udata.substring(0,2)}`
-         const uhoraFormatada = `${uhora.substring(0,2)}:${uhora.substring(2,4)}:${uhora.substring(4,6)}`
+         const udataFormatada = `${udata.substring(2, 4)}/${udata.substring(4, 6)}/${udata.substring(0, 2)}`
+         const uhoraFormatada = `${uhora.substring(0, 2)}:${uhora.substring(2, 4)}:${uhora.substring(4, 6)}`
          const udatacompleta = new Date(`${udataFormatada} ${uhoraFormatada}`)
          //console.log(udatacompleta + " <<< UDATA COMPLETA");
 
@@ -833,7 +831,7 @@ class LicenseController {
             nvyy: nvyy,
             cadv: cadv,
          },
-            { where: { id: registro.id} }
+            { where: { id: registro.id } }
          );
          return res.json(registro);
       }
@@ -856,8 +854,8 @@ class LicenseController {
    async updtxt(req, res) {
       const { id1, id2, id3 } = req.params; //ncmd, ntot, ndata
 
-    //const registro = await TBLDadostxt.findByPk(id1);
-      const registro = await TBLDadostxt.findOne({where: {ncmd: id1, ndata: id3} } );
+      //const registro = await TBLDadostxt.findByPk(id1);
+      const registro = await TBLDadostxt.findOne({ where: { ncmd: id1, ndata: id3 } });
 
       if (registro) {
          await TBLDadostxt.update(
@@ -866,13 +864,13 @@ class LicenseController {
                ntot: registro.ntot + +id2,
                ndata: registro.ndata,
             },
-          //{ where: {ncmd: id1} }
-            { where: {ncmd: id1, ndata: id3} }
+            //{ where: {ncmd: id1} }
+            { where: { ncmd: id1, ndata: id3 } }
          );
          return res.json(registro);
       }
 
-      const addRecord = await TBLDadostxt.create({ncmd: id1, ntot: +id2, ndata: id3});
+      const addRecord = await TBLDadostxt.create({ ncmd: id1, ntot: +id2, ndata: id3 });
       return res.json(addRecord);
    }
 
@@ -886,19 +884,19 @@ class LicenseController {
       return res.json({});
    }
    //
-      //NAOREG
-      async updnreg(req, res) {
-         const {nserie0,uname,cname,ndata,nhora,ntipo} = req.body;
-         const addRecord = await TBLNaoreg.create({
-            nserie0: nserie0,
-            uname: uname,
-            cname: cname,
-            ndata: ndata,
-            nhora: nhora,
-            ntipo: ntipo,
-         });
-         return res.json(addRecord);
-      }
+   //NAOREG
+   async updnreg(req, res) {
+      const { nserie0, uname, cname, ndata, nhora, ntipo } = req.body;
+      const addRecord = await TBLNaoreg.create({
+         nserie0: nserie0,
+         uname: uname,
+         cname: cname,
+         ndata: ndata,
+         nhora: nhora,
+         ntipo: ntipo,
+      });
+      return res.json(addRecord);
+   }
    ////////////////////////////////////////////////////
    ////////////////////////////////////////////////////
    async show(req, res) {
@@ -962,12 +960,12 @@ class LicenseController {
    }
 
    /** API Imóveis */
-   
+
    async getImoveis(req, res) {
       const { cpj } = req.params
-      const imoveis = await TBXimovel.findAll({ 
+      const imoveis = await TBXimovel.findAll({
          where: { cpj },
-         order: [ [ col('imovel'), 'ASC'] ]
+         order: [[col('imovel'), 'ASC']]
       });
       if (imoveis) {
          return res.json(imoveis);
@@ -980,16 +978,16 @@ class LicenseController {
 
       return res.json(await TBXimovel.findAll({
          where: { 'imovel': { [Op.like]: `%${predicate}%` }, cpj },
-         order: [ [ col('imovel'), 'ASC'] ]
+         order: [[col('imovel'), 'ASC']]
       }))
    }
 
    async getImoveisByIndex(req, res) {
       const { cpj, index } = req.params;
-      
+
       const imoveis = await TBXimovel.findAll({
          where: { cpj },
-         order: [ [ col('imovel'), 'ASC'] ]
+         order: [[col('imovel'), 'ASC']]
       });
 
       if (imoveis) {
@@ -1036,7 +1034,7 @@ class LicenseController {
       const imovelExists = await TBXimovel.count({ where: { imovel, cpj } })
 
       if (imovelExists > 0)
-         return res.json({errorMessage: "Imóvel já existe!"}).status(400)
+         return res.json({ errorMessage: "Imóvel já existe!" }).status(400)
 
       const addRecord = await TBXimovel.create({
          cpj,
@@ -1069,7 +1067,7 @@ class LicenseController {
       const { cpj } = req.params
       const proprietarios = await TBXproprieta.findAll({
          where: { cpj },
-         order: [ [ col('proprieta'), 'ASC'] ]
+         order: [[col('proprieta'), 'ASC']]
       });
       if (proprietarios) {
          return res.json(proprietarios);
@@ -1082,7 +1080,7 @@ class LicenseController {
 
       return res.json(await TBXproprieta.findAll({
          where: { 'proprieta': { [Op.like]: `%${predicate}%` }, cpj },
-         order: [ [ col('proprieta'), 'ASC'] ]
+         order: [[col('proprieta'), 'ASC']]
       }))
    }
 
@@ -1091,7 +1089,7 @@ class LicenseController {
 
       const proprietarios = await TBXproprieta.findAll({
          where: { cpj },
-         order: [ [ col('proprieta'), 'ASC'] ]
+         order: [[col('proprieta'), 'ASC']]
       });
 
       if (proprietarios) {
@@ -1134,7 +1132,7 @@ class LicenseController {
       const proprietarioExists = await TBXproprieta.count({ where: { proprieta, cpj } })
 
       if (proprietarioExists > 0)
-         return res.json({errorMessage: "Proprietário já existe!"}).status(400)
+         return res.json({ errorMessage: "Proprietário já existe!" }).status(400)
 
       const addRecord = await TBXproprieta.create({
          cpj,
@@ -1163,7 +1161,7 @@ class LicenseController {
       const { cpj } = req.params
       const responsaveisTecnico = await TBXresptec.findAll({
          where: { cpj },
-         order: [ [ col('respetec'), 'ASC'] ]
+         order: [[col('respetec'), 'ASC']]
       });
       if (responsaveisTecnico) {
          return res.json(responsaveisTecnico);
@@ -1176,7 +1174,7 @@ class LicenseController {
 
       return res.json(await TBXresptec.findAll({
          where: { 'respetec': { [Op.like]: `%${predicate}%` }, cpj },
-         order: [ [ col('respetec'), 'ASC'] ]
+         order: [[col('respetec'), 'ASC']]
       }))
    }
 
@@ -1185,7 +1183,7 @@ class LicenseController {
 
       const responsavelTecnicos = await TBXresptec.findAll({
          where: { cpj },
-         order: [ [ col('respetec'), 'ASC'] ]
+         order: [[col('respetec'), 'ASC']]
       });
 
       if (responsavelTecnicos) {
@@ -1225,7 +1223,7 @@ class LicenseController {
       const respetecExists = await TBXresptec.count({ where: { respetec, cpj } })
 
       if (respetecExists > 0)
-         return res.json({errorMessage: "Responsável Técnico já existe!"}).status(400)
+         return res.json({ errorMessage: "Responsável Técnico já existe!" }).status(400)
 
       const addRecord = await TBXresptec.create({
          cpj,
@@ -1243,6 +1241,33 @@ class LicenseController {
       const sucess = await TBXresptec.destroy({ where: { id: id } });
 
       return res.json(sucess);
+   }
+
+   async wixPaymentStatusUpdate(req, res) {
+      let event;
+      let eventData;
+
+      try {
+         const rawPayload = jwt.verify(req.body, process.env.WIX_PUBLIC_KEY);
+         event = JSON.parse(rawPayload.data);
+         eventData = JSON.parse(event.data);
+      } catch (err) {
+         console.error(err);
+         res.status(400).send(`Webhook error: ${err.message}`);
+         return;
+      }
+
+      switch (event.eventType) {
+         case "wix.ecom.v1.order_payment_status_updated":
+            console.log(`wix.ecom.v1.order_payment_status_updated event received with data:`, eventData);
+            //
+            // handle your event here
+            //
+            break;
+         default:
+            console.log(`Received unknown event type: ${event.eventType}`);
+            break;
+      }
    }
 
 }
