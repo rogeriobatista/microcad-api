@@ -1260,9 +1260,7 @@ class LicenseController {
       switch (event.eventType) {
          case "wix.ecom.v1.order_payment_status_updated":
             console.log(`wix.ecom.v1.order_payment_status_updated event received with data:`, eventData);
-            //
-            // handle your event here
-            //
+            res.status(200).send({body: req.body, eventData});
             break;
          default:
             console.log(`Received unknown event type: ${event.eventType}`);
