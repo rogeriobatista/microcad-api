@@ -1256,6 +1256,8 @@ class LicenseController {
       let event;
       let eventData;
 
+      return res.status(200).send(req.body);
+
       try {
          const rawPayload = jwt.verify(req.body, WIX_PUBLIC_KEY);
          event = JSON.parse(rawPayload.data);
