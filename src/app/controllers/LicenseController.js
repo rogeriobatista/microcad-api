@@ -22,6 +22,15 @@ import TBXimovel from '../models/TBXimovel';
 import TBXproprieta from '../models/TBXproprieta';
 import TBXresptec from '../models/TBXresptec';
 
+const WIX_PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3oGVOgcYuK2RfY6OKUBT
+yu37dqNJyyhs/jWX6N/89dFLmXMCtqv9hTCOOYXG9MFHCtmqmS6zR6nM/Eh683fx
+dCe/nAOYwchOQg2gu++vb729lH/9dYhVR7b1kDXM/Q199leAXhznshlr7g9RKTRq
+ms3pY3klzVdBhmyfhShpqVKUQYtsYPs1FIPx/ErHjC49qwcLyjl1/PewNX9WWrjw
+z5G0e5qhZ2opHeh4JBhxmKQ2R/53GNf/Pp6indTQ+KqhCuOJX3m1iaOcDElDBMpD
+DCKC4BCrK5mJllE4sxGx2XWhPOrwpjqo77nLxJQBwT7p7rVdxciyxO/G92rFVXEY
+dwIDAQAB
+-----END PUBLIC KEY-----`;
 class LicenseController {
 
    async search(req, res) {
@@ -1248,7 +1257,7 @@ class LicenseController {
       let eventData;
 
       try {
-         const rawPayload = jwt.verify(req.body, process.env.WIX_PUBLIC_KEY);
+         const rawPayload = jwt.verify(req.body, WIX_PUBLIC_KEY);
          event = JSON.parse(rawPayload.data);
          eventData = JSON.parse(event.data);
       } catch (err) {
