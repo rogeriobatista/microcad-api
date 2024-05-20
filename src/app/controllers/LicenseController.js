@@ -1274,7 +1274,11 @@ class LicenseController {
             const order = eventData.actionEvent.body.order;
 
             order.lineItems.forEach(async (item) => {
-               createLicense(order, item);
+               const action = getAction(item.id);
+               switch(action) {
+                  case "create": createLicense(order, item); break;
+               }
+               
             });
 
             break;
@@ -1290,20 +1294,20 @@ class LicenseController {
 
 const createLicense = async (order, item) => {
 
-   const nserie = await getNextNserie();
+   const { nserie, lastVersion } = await getNextNserie();
 
    const { firstName, lastName } = order.billingInfo.contactDetails;
    const { city, subdivision } = order.billingInfo.address
 
    const tipo = "A";
-   const versao = getVersion(item.productName.original);
+   const versao = lastVersion;
    const email = order.buyerInfo.email;
    const cliente = `${firstName} ${lastName}`;
    const nome = cliente;
    const nomereg = cliente;
    const cgc = "99999999999";
    const data = new Date().toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit', year: '2-digit' });
-   const pago = `WIX - ${order.number}`;
+   const pago = `WIX-${order.number}`;
    const cidade = city || "X";
    const uf = subdivision || "XX";
    const programa = "TOPOCAD";
@@ -1346,33 +1350,20 @@ const createLicense = async (order, item) => {
 }
 
 const getNextNserie = async () => {
-   const { nserie } = await TBLRegistro.findOne({
+   const { nserie, versao } = await TBLRegistro.findOne({
       order: [
          [col('nserie'), 'DESC']
       ]
    });
    const onlyNumbers = nserie.replace(/([^0-9]+)/gi, "");
    const letter = nserie.replace(/([^a-zA-Z]+)/gi, "");
-   return `${letter}${Number(onlyNumbers) + 1}`;
-}
-
-const getVersion = (productName) => {
-   if (productName.includes("V19"))
-      return "V19"
-
-   if (productName.includes("V18"))
-      return "V18"
-
-   if (productName.includes("V17"))
-      return "V17"
-
-   if (productName.includes("V16"))
-      return "V16"
+   return { nserie: `${letter}${Number(onlyNumbers) + 1}`, lastVersion: versao } ;
 }
 
 const getAction = (productId) => {
    const actions = {
       "be31f5b4-10cf-7a61-db8c-7d468bbf7583": "create",
+      "01df1086-d817-a377-f524-8a79b56547a2": "create",
    }
 
    return actions[productId];
