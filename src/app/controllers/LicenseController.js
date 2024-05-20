@@ -1273,8 +1273,8 @@ class LicenseController {
 
             const order = eventData.actionEvent.body.order;
 
-            order.lineItems.forEach(() => {
-               createLicense(order);
+            order.lineItems.forEach(async (item) => {
+               createLicense(order, item.productName.original);
             });
 
             break;
@@ -1288,19 +1288,19 @@ class LicenseController {
 
 }
 
-const createLicense = async (order) => {
+const createLicense = async (order, productName) => {
 
    const nserie = await getNextNserie();
 
-   const { firstName, lastName } = order.billingInfo.contactDetails;
+   const { firstName, lastName, address } = order.billingInfo.contactDetails;
 
-   const tipo = "A|B";
-   const versao = "V19";
+   const tipo = "A";
+   const versao = getVersion(productName);
    const email = order.buyerInfo.email;
    const cliente = `${firstName} ${lastName}`;
-   const cgc = "CPF|CNPJ";
+   const cgc = "";
 
-   return await TBLRegistro.create({
+   const registro = await TBLRegistro.create({
       nserie,
       tipo,
       versao,
@@ -1308,6 +1308,8 @@ const createLicense = async (order) => {
       cliente,
       cgc,
    });
+
+   await sendLicenseEmail(registro, cliente, address?.subdivision);
 }
 
 const getNextNserie = async () => {
@@ -1321,12 +1323,66 @@ const getNextNserie = async () => {
    return `${letter}${Number(onlyNumbers) + 1}`;
 }
 
+const getVersion = (productName) => {
+   if (productName.includes("V19"))
+      return "V19"
+
+   if (productName.includes("V18"))
+      return "V18"
+
+   if (productName.includes("V17"))
+      return "V17"
+
+   if (productName.includes("V16"))
+      return "V16"
+}
+
 const getAction = (productId) => {
    const actions = {
       "be31f5b4-10cf-7a61-db8c-7d468bbf7583": "create",
    }
 
    return actions[productId];
+}
+
+const sendLicenseEmail = async (registro, nome, uf) => {
+
+   const { cgc, email, versao, nserie } = registro;
+
+   const transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      secure: false,
+      port: 587,
+      auth: {
+         user: 'microcad.adm@gmail.com',
+         pass: 'cvsqizatsjqelemi'
+      },
+   });
+
+   var mailOptions = {
+      from: '"MICROCAD-Computação Grafica e Sistemas" <microcad.adm@gmail.com>',
+      to: `${email}, comercial@topocad2000.com.br`,
+      subject: `TOPOCAD2000 ${versao} - ${nserie} * CHAVE VIRTUAL`,
+      text: `*TOPOCAD2000 ${versao} - ${nserie} >>> ${nome}-${uf}
+      1-Clique no link a seguir para baixar / instalar / atualizar TOPOCAD2000 ${versao} (caso ainda não tenha feito).
+      https://www.topocad2000.com.br/downloads/TOPOCAD2000${versao}.exe 
+      2-Abra o AutoCAD / BricsCAD / GstarCAD / ZwCAD, acesse um menu do TOPOCAD2000 e clique em MICROCAD
+      3-Clique em HABILITAR PARA CHAVE VIRTUAL.
+      4-Informe o NUMERO DE SERIE / EMAIL / CPF ou CNPJ.
+      Número de Série: >>> ${nserie} <<< 
+      Email: >>> ${email} <<< 
+      CPF / CNPJ: >>> ${cgc} <<`
+   };
+
+   transporter.sendMail(mailOptions, function (error, info) {
+      if (error) {
+         console.log(error);
+         return res.send({ status: false })
+      } else {
+         console.log('Email sent: ' + info.response);
+         return res.send({ status: true })
+      }
+   });
 }
 
 export default new LicenseController();
