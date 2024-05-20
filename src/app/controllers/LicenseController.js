@@ -1274,7 +1274,7 @@ class LicenseController {
             const order = eventData.actionEvent.body.order;
 
             order.lineItems.forEach(async (item) => {
-               createLicense(order, item.productName.original);
+               createLicense(order, item);
             });
 
             break;
@@ -1288,17 +1288,46 @@ class LicenseController {
 
 }
 
-const createLicense = async (order, productName) => {
+const createLicense = async (order, item) => {
 
    const nserie = await getNextNserie();
 
-   const { firstName, lastName, address } = order.billingInfo.contactDetails;
+   const { firstName, lastName } = order.billingInfo.contactDetails;
+   const { city, subdivision } = order.billingInfo.address
 
    const tipo = "A";
-   const versao = getVersion(productName);
+   const versao = getVersion(item.productName.original);
    const email = order.buyerInfo.email;
    const cliente = `${firstName} ${lastName}`;
+   const nome = cliente;
+   const nomereg = cliente;
    const cgc = "";
+   const data = new Date().toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit', year: '2-digit' });
+   const pago = `WIX - ${order.number}`;
+   const cidade = city || "X";
+   const uf = subdivision || "XX";
+   const programa = "TOPOCAD";
+   const valor = item.price.amount;
+   const nn = '1';
+   const pp = "BR";
+
+   await TBLRegistronet.create({
+      nserie,
+      nome,
+      nomereg,
+      tipo,
+      versao,
+      data,
+      pago,
+      cidade,
+      uf,
+      cgc,
+      email,
+      programa,
+      valor,
+      nn,
+      pp
+   });
 
    const registro = await TBLRegistro.create({
       nserie,
@@ -1307,9 +1336,13 @@ const createLicense = async (order, productName) => {
       email,
       cliente,
       cgc,
+      cidade,
+      uf,
+      nn,
+      pp
    });
 
-   await sendLicenseEmail(registro, cliente, address?.subdivision);
+   await sendLicenseEmail(registro, cliente, uf);
 }
 
 const getNextNserie = async () => {
