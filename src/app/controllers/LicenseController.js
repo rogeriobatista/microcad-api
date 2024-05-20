@@ -1257,11 +1257,11 @@ class LicenseController {
       let eventData;
 
       try {
-         // const rawPayload = jwt.verify(req.body, WIX_PUBLIC_KEY);
-         // event = JSON.parse(rawPayload.data);
-         // eventData = JSON.parse(event.data);
-         event = req.body.data;
+         const rawPayload = jwt.verify(req.body, WIX_PUBLIC_KEY);
+         event = JSON.parse(rawPayload.data);
          eventData = JSON.parse(event.data);
+         // event = req.body.data;
+         // eventData = JSON.parse(event.data);
       } catch (err) {
          console.error(err);
          return res.status(400).send(`Webhook error: ${err.message}`);
@@ -1269,7 +1269,7 @@ class LicenseController {
 
       switch (event.eventType) {
          case "wix.ecom.v1.order_payment_status_updated":
-            // console.log(`wix.ecom.v1.order_payment_status_updated event received with data:`, eventData);
+            console.log(`wix.ecom.v1.order_payment_status_updated event received with data:`, eventData);
 
             const order = eventData.actionEvent.body.order;
 
@@ -1301,7 +1301,7 @@ const createLicense = async (order, item) => {
    const cliente = `${firstName} ${lastName}`;
    const nome = cliente;
    const nomereg = cliente;
-   const cgc = "";
+   const cgc = "99999999999";
    const data = new Date().toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit', year: '2-digit' });
    const pago = `WIX - ${order.number}`;
    const cidade = city || "X";
