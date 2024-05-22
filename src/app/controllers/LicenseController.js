@@ -1260,6 +1260,7 @@ class LicenseController {
          // const rawPayload = jwt.verify(req.body, WIX_PUBLIC_KEY);
          // event = JSON.parse(rawPayload.data);
          // eventData = JSON.parse(event.data);
+         console.log("body: ", req.body);
          event = req.body.data;
          eventData = JSON.parse(event.data);
       } catch (err) {
