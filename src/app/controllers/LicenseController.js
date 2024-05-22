@@ -1257,11 +1257,11 @@ class LicenseController {
       let eventData;
 
       try {
-         const rawPayload = jwt.verify(req.body, WIX_PUBLIC_KEY);
-         event = JSON.parse(rawPayload.data);
-         eventData = JSON.parse(event.data);
-         // event = req.body.data;
+         // const rawPayload = jwt.verify(req.body, WIX_PUBLIC_KEY);
+         // event = JSON.parse(rawPayload.data);
          // eventData = JSON.parse(event.data);
+         event = req.body.data;
+         eventData = JSON.parse(event.data);
       } catch (err) {
          console.error(err);
          return res.status(400).send(`Webhook error: ${err.message}`);
