@@ -1302,6 +1302,7 @@ class LicenseController {
       lineItems.forEach(async (item) => {
          console.log("Item: ", JSON.stringify(item));
          const action = getAction(item.id);
+         console.log("Action: ", action);
          switch (action) {
             case "create": {
                await createLicenseFromAutomation(billingInfo, buyerEmail, orderNumber, item);
@@ -1369,6 +1370,9 @@ const createLicenseFromAutomation = async (billingInfo, buyerEmail, orderNumber,
       nn,
       pp
    });
+
+   console.log("License number: ", registro.nserie);
+
    await sendLicenseEmail(registro, cliente, uf);
 }
 
