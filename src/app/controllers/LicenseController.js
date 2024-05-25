@@ -1301,7 +1301,7 @@ class LicenseController {
 
       lineItems.forEach(async (item) => {
          console.log("Item: ", JSON.stringify(item));
-         const action = getAction(item.id);
+         const action = getAction(item.catalogItemId);
          console.log("Action: ", action);
          switch (action) {
             case "create": {
@@ -1336,7 +1336,7 @@ const createLicenseFromAutomation = async (billingInfo, buyerEmail, orderNumber,
    const cidade = city || "X";
    const uf = subdivision || "XX";
    const programa = "TOPOCAD";
-   const valor = item.price.amount;
+   const valor = item.totalPrice.value;
    const nn = '1';
    const pp = "BR";
 
