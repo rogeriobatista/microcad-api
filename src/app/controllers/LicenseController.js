@@ -1256,7 +1256,7 @@ class LicenseController {
    async wixPaymentStatusUpdate(req, res) {
 
       return res.status(200).send();
-      
+
       let event;
       let eventData;
 
@@ -1296,10 +1296,11 @@ class LicenseController {
    }
 
    async wixPayLoad(req, res) {
-      console.log(JSON.stringify(req.body));
+      console.log("Webhook Payload: ", JSON.stringify(req.body));
       const { orderNumber, buyerEmail, lineItems, billingInfo } = req.body.data;
 
       lineItems.forEach(async (item) => {
+         console.log("Item: ", JSON.stringify(item));
          const action = getAction(item.id);
          switch (action) {
             case "create": {
