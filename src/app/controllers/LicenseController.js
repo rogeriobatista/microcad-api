@@ -1297,16 +1297,16 @@ const createLicense = async (order, item) => {
 
    const { nserie, lastVersion } = await getNextNserie();
 
-   const { firstName, lastName } = order.billingInfo.contactDetails;
+   const { firstName, lastName, vatId } = order.billingInfo.contactDetails;
    const { city, subdivision } = order.billingInfo.address
 
-   const tipo = "A";
+   const tipo = getType(vatId?.type);
    const versao = lastVersion;
    const email = order.buyerInfo.email;
    const cliente = `${firstName} ${lastName}`;
    const nome = cliente;
    const nomereg = cliente;
-   const cgc = "99999999999";
+   const cgc = vatId?.id || "99999999999";
    const data = new Date().toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit', year: '2-digit' });
    const pago = `WIX-${order.number}`;
    const cidade = city || "X";
@@ -1348,6 +1348,10 @@ const createLicense = async (order, item) => {
    });
 
    await sendLicenseEmail(registro, cliente, uf);
+}
+
+const getType = (type) => {
+   return type && type == 'CNPJ' ? 'B' : 'A';
 }
 
 const getNextNserie = async () => {
