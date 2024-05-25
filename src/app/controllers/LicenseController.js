@@ -1334,7 +1334,9 @@ const createLicenseFromAutomation = async (billingInfo, buyerEmail, orderNumber,
    const data = new Date().toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit', year: '2-digit' });
    const pago = `WIX-${orderNumber}`;
    const cidade = city || "X";
-   const uf = subdivision || "XX";
+   // const uf = subdivision || "XX";
+   console.log("UF: ", subdivision);
+   const uf = "XX"; //TODO tratar truncate para 2 chars
    const programa = "TOPOCAD";
    const valor = item.totalPrice.value;
    const nn = '1';
