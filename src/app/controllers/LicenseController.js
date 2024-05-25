@@ -1438,7 +1438,7 @@ const getType = (type) => {
 }
 
 const getNextNserie = async () => {
-   const { nserie, versao } = await TBLRegistro.findOne({
+   const { nserie, versao } = await TBLRegistronet.findOne({
       order: [
          [col('nserie'), 'DESC']
       ]
