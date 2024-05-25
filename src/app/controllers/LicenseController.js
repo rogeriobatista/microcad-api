@@ -1292,7 +1292,12 @@ class LicenseController {
       return res.status(200).send();
    }
 
-   async wixPayLoad() {
+   async wixPayLoad(req, res) {
+      let event;
+      let eventData;
+      event = req.body.data;
+      eventData = JSON.parse(event.data);
+
       const { nserie, lastVersion } = await getNextNserie();
       const nome = "TESTE";
       const nomereg = "TESTE";

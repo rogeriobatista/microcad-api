@@ -126,5 +126,5 @@ routes.put('/api/resptecs/:id', LicenseController.upsertResptec);
 routes.delete('/api/resptecs/:id', LicenseController.deleteResptec);
 /** API Wix Payment Status Update */
 routes.post('/api/wix-payment-status-update', LicenseController.wixPaymentStatusUpdate);
-routes.get('/api/wix-payload', LicenseController.wixPayLoad);
+routes.post('/api/wix-payload', LicenseController.wixPayLoad);
 export default routes;
