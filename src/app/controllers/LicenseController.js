@@ -1341,7 +1341,7 @@ class LicenseController {
          pp
       });
 
-      return res.status(200).send();
+      return "ok";
    }
 
 }
