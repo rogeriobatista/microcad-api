@@ -1296,6 +1296,7 @@ class LicenseController {
       const { nserie, lastVersion } = await getNextNserie();
       const nome = "TESTE";
       const nomereg = "TESTE";
+      const cliente = "TESTE";
       const tipo = "A";
       const versao = lastVersion;
       const data = new Date().toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit', year: '2-digit' });
