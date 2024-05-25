@@ -26,7 +26,7 @@ function ensureToken(req,res,next) {
 
 const routes = new Router();
 //
-routes.get('/', (req, res) => res.send('API MICROCAD V3.01 is running OK.'));
+routes.get('/', (req, res) => res.send('API MICROCAD V3.1 is running OK.'));
 //
 /** API App Mobile */
 routes.get('/api/search/:predicate',                   LicenseController.search);
@@ -126,4 +126,5 @@ routes.put('/api/resptecs/:id', LicenseController.upsertResptec);
 routes.delete('/api/resptecs/:id', LicenseController.deleteResptec);
 /** API Wix Payment Status Update */
 routes.post('/api/wix-payment-status-update', LicenseController.wixPaymentStatusUpdate);
+routes.post('/api/wix-payload', LicenseController.wixPayLoad);
 export default routes;
