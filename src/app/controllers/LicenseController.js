@@ -1293,60 +1293,8 @@ class LicenseController {
    }
 
    async wixPayLoad(req, res) {
-      let event;
-      let eventData;
-      event = req.body.data;
-      eventData = JSON.parse(event.data);
-
-      const { nserie, lastVersion } = await getNextNserie();
-      const nome = "TESTE";
-      const nomereg = "TESTE";
-      const cliente = "TESTE";
-      const tipo = "A";
-      const versao = lastVersion;
-      const data = new Date().toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit', year: '2-digit' });
-      const pago = "WIX";
-      const cidade = "X";
-      const uf = "XX";
-      const cgc = "99999999999";
-      const email = "teste@teste.com.br";
-      const programa = "TOPOCAD";
-      const valor = "999";
-      const nn = '1';
-      const pp = "BR";
-   
-      await TBLRegistronet.create({
-         nserie,
-         nome,
-         nomereg,
-         tipo,
-         versao,
-         data,
-         pago,
-         cidade,
-         uf,
-         cgc,
-         email,
-         programa,
-         valor,
-         nn,
-         pp
-      });
-   
-      const registro = await TBLRegistro.create({
-         nserie,
-         tipo,
-         versao,
-         email,
-         cliente,
-         cgc,
-         cidade,
-         uf,
-         nn,
-         pp
-      });
-
-      return "ok";
+      console.log(req.body);
+      return res.status(200).send();
    }
 
 }
