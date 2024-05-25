@@ -1277,10 +1277,10 @@ class LicenseController {
 
             order.lineItems.forEach(async (item) => {
                const action = getAction(item.id);
-               switch(action) {
+               switch (action) {
                   case "create": createLicense(order, item); break;
                }
-               
+
             });
 
             break;
@@ -1293,10 +1293,78 @@ class LicenseController {
    }
 
    async wixPayLoad(req, res) {
-      console.log(req.body);
-      return res.status(200).send();
+      const { orderNumber, buyerEmail, lineItems, billingInfo } = req.body.data;
+
+      lineItems.forEach(async (item) => {
+         const action = getAction(item.id);
+         switch (action) {
+            case "create": {
+               await createLicenseFromAutomation(billingInfo, buyerEmail, orderNumber, item);
+               res.status(200).send();
+               break;
+            }
+            default:
+               res.status(200).send();
+         }
+
+      });
    }
 
+}
+
+const createLicenseFromAutomation = async (billingInfo, buyerEmail, orderNumber, item) => {
+   const { nserie, lastVersion } = await getNextNserie();
+
+   const { firstName, lastName, vatId } = billingInfo.contactDetails;
+   const { city, subdivision } = billingInfo.address
+
+   const tipo = getType(vatId?.type);
+   const versao = lastVersion;
+   const email = buyerEmail;
+   const cliente = `${firstName} ${lastName}`;
+   const nome = cliente;
+   const nomereg = cliente;
+   const cgc = vatId?.id || "99999999999";
+   const data = new Date().toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit', year: '2-digit' });
+   const pago = `WIX-${orderNumber}`;
+   const cidade = city || "X";
+   const uf = subdivision || "XX";
+   const programa = "TOPOCAD";
+   const valor = item.price.amount;
+   const nn = '1';
+   const pp = "BR";
+
+   await TBLRegistronet.create({
+      nserie,
+      nome,
+      nomereg,
+      tipo,
+      versao,
+      data,
+      pago,
+      cidade,
+      uf,
+      cgc,
+      email,
+      programa,
+      valor,
+      nn,
+      pp
+   });
+
+   const registro = await TBLRegistro.create({
+      nserie,
+      tipo,
+      versao,
+      email,
+      cliente,
+      cgc,
+      cidade,
+      uf,
+      nn,
+      pp
+   });
+   await sendLicenseEmail(registro, cliente, uf);
 }
 
 const createLicense = async (order, item) => {
@@ -1366,7 +1434,7 @@ const getNextNserie = async () => {
    });
    const onlyNumbers = nserie.replace(/([^0-9]+)/gi, "");
    const letter = nserie.replace(/([^a-zA-Z]+)/gi, "");
-   return { nserie: `${letter}${Number(onlyNumbers) + 1}`, lastVersion: versao } ;
+   return { nserie: `${letter}${Number(onlyNumbers) + 1}`, lastVersion: versao };
 }
 
 const getAction = (productId) => {
