@@ -1450,8 +1450,24 @@ const getNextNserie = async () => {
 
 const getAction = (productId) => {
    const actions = {
-      "be31f5b4-10cf-7a61-db8c-7d468bbf7583": "create",
-      "01df1086-d817-a377-f524-8a79b56547a2": "create",
+      "be31f5b4-10cf-7a61-db8c-7d468bbf7583": "create", //TOPOCAD2000 V19
+      "01df1086-d817-a377-f524-8a79b56547a2": "create", //TOPOCAD2000 V19 TESTE R$1,00
+      "6c7f7a4d-ae62-d25d-1d9d-877cec140a16": "create", //TOPOCAD2000 V18/V19 nserieant = TXXYYYY
+      "eeee001c-4671-61d2-7756-bf5a676ace1c": "create", //TOPOCAD2000 V17/V19 nserieant = TXXYYYY
+      "8ff9ec96-26df-4037-6a80-8d55b4151223": "create", //TOPOCAD2000 VXX/V19 nserieant = TXXYYYY
+
+    //"6e262a99-bf61-e906-f029-6bdbd88f728a": "createM", //MEMORIALCAD V9
+    //"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx": "createM", //MEMORIALCAD V9 TESTE R$1,00
+    //"0b81a3d2-bbaf-0b3f-f9bc-ad58821f2eca": "createM", //MEMORIALCAD VX/V9 nserieant = MXXYY
+
+    //"3013644781": "createP", //PERFIS2000 V12
+    //"xxxxxxxxxx": "createP", //PERFIS2000 V12 TESTE R$1,00
+    //"4625346131": "createP", //PERFIS2000 VXX/V12 nserieant = PXXYY
+
+    //"3014244621": "createQ", //QFCAD2000 V6
+    //"xxxxxxxxxx": "createQ", //QFCAD2000 V6 TESTE R$1,00
+    //"4652686311": "createQ", //QFCAD2000 VX/V6 nserieant = QXXYY
+
    }
 
    return actions[productId];
