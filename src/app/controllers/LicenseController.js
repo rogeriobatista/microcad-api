@@ -1306,13 +1306,13 @@ class LicenseController {
          switch (action) {
             case "create": {
                await createLicenseFromAutomation(billingInfo, buyerEmail, orderNumber, item);
-               res.status(200).send();
-               break;
+            }
+            case "update": {
+               await updateLicenceFromAutomation(billingInfo, buyerEmail, orderNumber, item);
             }
             default:
                res.status(200).send();
          }
-
       });
    }
 
@@ -1369,6 +1369,57 @@ const createLicenseFromAutomation = async (billingInfo, buyerEmail, orderNumber,
       cgc,
       cidade,
       uf,
+      nn,
+      pp
+   });
+
+   console.log("License number: ", registro.nserie);
+
+   await sendLicenseEmail(registro, cliente, uf);
+}
+
+const updateLicenceFromAutomation = async (billingInfo, buyerEmail, orderNumber, item) => {
+   const { nserie, lastVersion } = await getNextNserie();
+
+   const { firstName, lastName, vatId } = billingInfo.contactDetails;
+   const { city, subdivision } = billingInfo.address
+
+   const nserieant = "TXXYYYY";
+   const versaoant = "VXX";
+   const tipo = getType(vatId?.type);
+   const versao = lastVersion;
+   const email = buyerEmail;
+   const cliente = `${firstName} ${lastName}`;
+   const nome = cliente;
+   const nomereg = cliente;
+   const cgc = vatId?.id || "99999999999";
+   const data = new Date().toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit', year: '2-digit' });
+   const pago = `WIX-${orderNumber}`;
+   const cidade = city || "X";
+   // const uf = subdivision || "XX";
+   console.log("UF: ", subdivision);
+   const uf = "XX"; //TODO tratar truncate para 2 chars
+   const programa = "TOPOCAD";
+   const valor = item.totalPrice.value;
+   const nn = '1';
+   const pp = "BR";
+
+   await TBLRegistronet.create({
+      nserie,
+      nserieant,
+      nome,
+      nomereg,
+      tipo,
+      versao,
+      versaoant,
+      data,
+      pago,
+      cidade,
+      uf,
+      cgc,
+      email,
+      programa,
+      valor,
       nn,
       pp
    });
@@ -1452,9 +1503,9 @@ const getAction = (productId) => {
    const actions = {
       "be31f5b4-10cf-7a61-db8c-7d468bbf7583": "create", //TOPOCAD2000 V19
       "01df1086-d817-a377-f524-8a79b56547a2": "create", //TOPOCAD2000 V19 TESTE R$1,00
-      "6c7f7a4d-ae62-d25d-1d9d-877cec140a16": "create", //TOPOCAD2000 V18/V19 nserieant = TXXYYYY
-      "eeee001c-4671-61d2-7756-bf5a676ace1c": "create", //TOPOCAD2000 V17/V19 nserieant = TXXYYYY
-      "8ff9ec96-26df-4037-6a80-8d55b4151223": "create", //TOPOCAD2000 VXX/V19 nserieant = TXXYYYY
+      "6c7f7a4d-ae62-d25d-1d9d-877cec140a16": "update", //TOPOCAD2000 V18/V19 nserieant = TXXYYYY
+      "eeee001c-4671-61d2-7756-bf5a676ace1c": "update", //TOPOCAD2000 V17/V19 nserieant = TXXYYYY
+      "8ff9ec96-26df-4037-6a80-8d55b4151223": "update", //TOPOCAD2000 VXX/V19 nserieant = TXXYYYY
 
     //"6e262a99-bf61-e906-f029-6bdbd88f728a": "createM", //MEMORIALCAD V9
     //"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx": "createM", //MEMORIALCAD V9 TESTE R$1,00
