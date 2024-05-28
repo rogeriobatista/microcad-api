@@ -1300,7 +1300,7 @@ class LicenseController {
       const { paymentStatus, orderNumber, buyerEmail, lineItems, billingInfo } = req.body.data;
 
       console.log("Payment status: ", paymentStatus);
-      if (paymentStatus == 'PAID') {
+      if (paymentStatus != 'PAID') {
          return res.status(200).send();
       }
 
