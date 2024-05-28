@@ -1297,27 +1297,30 @@ class LicenseController {
 
    async wixPayLoad(req, res) {
       console.log("Webhook Payload: ", JSON.stringify(req.body));
-      const { orderNumber, buyerEmail, lineItems, billingInfo } = req.body.data;
+      const { paymentStatus, orderNumber, buyerEmail, lineItems, billingInfo } = req.body.data;
 
-      lineItems.forEach(async (item) => {
+      console.log("Payment status: ", paymentStatus);
+      if (paymentStatus == 'PAID') {
+         return res.status(200).send();
+      }
+
+      await Promise.all(lineItems.map(async (item) => {
          console.log("Item: ", JSON.stringify(item));
          const action = getAction(item.catalogItemId);
          console.log("Action: ", action);
          switch (action) {
             case "create": {
                await createLicenseFromAutomation(billingInfo, buyerEmail, orderNumber, item);
-               res.status(200).send();
                break;
             }
             case "update": {
                await updateLicenceFromAutomation(billingInfo, buyerEmail, orderNumber, item);
-               res.status(200).send();
                break;
             }
-            default:
-               res.status(200).send();
          }
-      });
+      }));
+
+      return res.status(200).send();
    }
 
 }
@@ -1506,7 +1509,7 @@ const getNextNserie = async () => {
 const getAction = (productId) => {
    const actions = {
       "be31f5b4-10cf-7a61-db8c-7d468bbf7583": "create", //TOPOCAD2000 V19
-      "01df1086-d817-a377-f524-8a79b56547a2": "create", //TOPOCAD2000 V19 TESTE R$1,00
+      "01df1086-d817-a377-f524-8a79b56547a2": "update", //TOPOCAD2000 V19 TESTE R$1,00
       "6c7f7a4d-ae62-d25d-1d9d-877cec140a16": "update", //TOPOCAD2000 V18/V19 nserieant = TXXYYYY
       "eeee001c-4671-61d2-7756-bf5a676ace1c": "update", //TOPOCAD2000 V17/V19 nserieant = TXXYYYY
       "8ff9ec96-26df-4037-6a80-8d55b4151223": "update", //TOPOCAD2000 VXX/V19 nserieant = TXXYYYY
