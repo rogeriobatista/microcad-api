@@ -1257,42 +1257,42 @@ class LicenseController {
 
       return res.status(200).send();
 
-      let event;
-      let eventData;
+      // let event;
+      // let eventData;
 
-      try {
-         // const rawPayload = jwt.verify(req.body, WIX_PUBLIC_KEY);
-         // event = JSON.parse(rawPayload.data);
-         // eventData = JSON.parse(event.data);
-         console.log("body: ", req.body);
-         event = req.body.data;
-         eventData = JSON.parse(event.data);
-      } catch (err) {
-         console.error(err);
-         return res.status(400).send(`Webhook error: ${err.message}`);
-      }
+      // try {
+      //    // const rawPayload = jwt.verify(req.body, WIX_PUBLIC_KEY);
+      //    // event = JSON.parse(rawPayload.data);
+      //    // eventData = JSON.parse(event.data);
+      //    console.log("body: ", req.body);
+      //    event = req.body.data;
+      //    eventData = JSON.parse(event.data);
+      // } catch (err) {
+      //    console.error(err);
+      //    return res.status(400).send(`Webhook error: ${err.message}`);
+      // }
 
-      switch (event.eventType) {
-         case "wix.ecom.v1.order_payment_status_updated":
-            console.log(`wix.ecom.v1.order_payment_status_updated event received with data:`, eventData);
+      // switch (event.eventType) {
+      //    case "wix.ecom.v1.order_payment_status_updated":
+      //       console.log(`wix.ecom.v1.order_payment_status_updated event received with data:`, eventData);
 
-            const order = eventData.actionEvent.body.order;
+      //       const order = eventData.actionEvent.body.order;
 
-            order.lineItems.forEach(async (item) => {
-               const action = getAction(item.id);
-               switch (action) {
-                  case "create": createLicense(order, item); break;
-               }
+      //       order.lineItems.forEach(async (item) => {
+      //          const action = getAction(item.id);
+      //          switch (action) {
+      //             case "create": createLicense(order, item); break;
+      //          }
 
-            });
+      //       });
 
-            break;
-         default:
-            console.log(`Received unknown event type: ${event.eventType}`);
-            break;
-      }
+      //       break;
+      //    default:
+      //       console.log(`Received unknown event type: ${event.eventType}`);
+      //       break;
+      // }
 
-      return res.status(200).send();
+      // return res.status(200).send();
    }
 
    async wixPayLoad(req, res) {
@@ -1306,9 +1306,13 @@ class LicenseController {
          switch (action) {
             case "create": {
                await createLicenseFromAutomation(billingInfo, buyerEmail, orderNumber, item);
+               res.status(200).send();
+               break;
             }
             case "update": {
                await updateLicenceFromAutomation(billingInfo, buyerEmail, orderNumber, item);
+               res.status(200).send();
+               break;
             }
             default:
                res.status(200).send();
