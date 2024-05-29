@@ -1254,12 +1254,9 @@ class LicenseController {
 
 
    async wixPaymentStatusUpdate(req, res) {
-
       return res.status(200).send();
-
       // let event;
       // let eventData;
-
       // try {
       //    // const rawPayload = jwt.verify(req.body, WIX_PUBLIC_KEY);
       //    // event = JSON.parse(rawPayload.data);
@@ -1271,27 +1268,21 @@ class LicenseController {
       //    console.error(err);
       //    return res.status(400).send(`Webhook error: ${err.message}`);
       // }
-
       // switch (event.eventType) {
       //    case "wix.ecom.v1.order_payment_status_updated":
       //       console.log(`wix.ecom.v1.order_payment_status_updated event received with data:`, eventData);
-
       //       const order = eventData.actionEvent.body.order;
-
       //       order.lineItems.forEach(async (item) => {
       //          const action = getAction(item.id);
       //          switch (action) {
       //             case "create": createLicense(order, item); break;
       //          }
-
       //       });
-
       //       break;
       //    default:
       //       console.log(`Received unknown event type: ${event.eventType}`);
       //       break;
       // }
-
       // return res.status(200).send();
    }
 
@@ -1516,15 +1507,15 @@ const getAction = (productId) => {
 
     //"6e262a99-bf61-e906-f029-6bdbd88f728a": "createM", //MEMORIALCAD V9
     //"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx": "createM", //MEMORIALCAD V9 TESTE R$1,00
-    //"0b81a3d2-bbaf-0b3f-f9bc-ad58821f2eca": "createM", //MEMORIALCAD VX/V9 nserieant = MXXYY
+    //"0b81a3d2-bbaf-0b3f-f9bc-ad58821f2eca": "updateM", //MEMORIALCAD VX/V9 nserieant = MXXYY
 
     //"3013644781": "createP", //PERFIS2000 V12
     //"xxxxxxxxxx": "createP", //PERFIS2000 V12 TESTE R$1,00
-    //"4625346131": "createP", //PERFIS2000 VXX/V12 nserieant = PXXYY
+    //"4625346131": "updateP", //PERFIS2000 VXX/V12 nserieant = PXXYY
 
     //"3014244621": "createQ", //QFCAD2000 V6
     //"xxxxxxxxxx": "createQ", //QFCAD2000 V6 TESTE R$1,00
-    //"4652686311": "createQ", //QFCAD2000 VX/V6 nserieant = QXXYY
+    //"4652686311": "updateQ", //QFCAD2000 VX/V6 nserieant = QXXYY
 
    }
 
@@ -1553,7 +1544,7 @@ const sendLicenseEmail = async (registro, nome, uf) => {
       2-Abra o AutoCAD / BricsCAD / GstarCAD / ZwCAD, acesse um menu do TOPOCAD2000 e clique em MICROCAD
       3-Clique em HABILITAR PARA CHAVE VIRTUAL.
       4-Informe o NUMERO DE SERIE / EMAIL / CPF ou CNPJ.
-      Número de Série: >>> ${nserie} <<< 
+      Número de Série: >>> ${nserie} <<< TIPO =A (CPF) =B (CNPJ)
       Email: >>> ${email} <<< 
       CPF / CNPJ: >>> ${cgc} <<`
    };
