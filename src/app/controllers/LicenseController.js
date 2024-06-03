@@ -1329,7 +1329,7 @@ const createLicenseFromAutomation = async (billingInfo, buyerEmail, orderNumber,
    const { nserie, lastVersion } = await getNextNserie();
 
    const { firstName, lastName, vatId } = billingInfo.contactDetails;
-   const { city, subdivision } = billingInfo.address
+   const { city, subdivision, postalCode } = billingInfo.address
 
    const tipo = getType(vatId?.type);
    const versao = lastVersion;
@@ -1341,9 +1341,9 @@ const createLicenseFromAutomation = async (billingInfo, buyerEmail, orderNumber,
    const data = new Date().toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit', year: '2-digit' });
    const pago = `WIX-${orderNumber}`;
    const cidade = city || "X";
-   // const uf = subdivision || "XX";
    console.log("UF: ", subdivision);
-   const uf = "XX"; //TODO tratar truncate para 2 chars
+   const uf = getUF(subdivision) || "XX"; //TODO tratar truncate para 2 chars
+   const cep = postalCode;
    const programa = "TOPOCAD";
    const valor = item.totalPrice.value;
    const nn = '1';
@@ -1359,6 +1359,7 @@ const createLicenseFromAutomation = async (billingInfo, buyerEmail, orderNumber,
       pago,
       cidade,
       uf,
+      cep,
       cgc,
       email,
       programa,
@@ -1383,6 +1384,11 @@ const createLicenseFromAutomation = async (billingInfo, buyerEmail, orderNumber,
    console.log("License number: ", registro.nserie);
 
    await sendLicenseEmail(registro, cliente, uf);
+}
+
+const getUF = (subdivision) => {
+   const [country, uf] = subdivision.split("-");
+   return uf;
 }
 
 const updateLicenceFromAutomation = async (billingInfo, buyerEmail, orderNumber, item) => {
