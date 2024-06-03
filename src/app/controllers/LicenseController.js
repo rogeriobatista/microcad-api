@@ -1333,7 +1333,7 @@ const createLicenseFromAutomation = async (billingInfo, buyerEmail, orderNumber,
    const pago = `WIX-${orderNumber}`;
    const cidade = city || "X";
    console.log("UF: ", subdivision);
-   const uf = getUF(subdivision) || "XX"; //TODO tratar truncate para 2 chars
+   const uf = getUF(subdivision) || "XX";
    const cep = postalCode;
    const programa = "TOPOCAD";
    const valor = item.totalPrice.value;
@@ -1386,7 +1386,7 @@ const updateLicenceFromAutomation = async (billingInfo, buyerEmail, orderNumber,
    const { nserie, lastVersion } = await getNextNserie();
 
    const { firstName, lastName, vatId } = billingInfo.contactDetails;
-   const { city, subdivision } = billingInfo.address
+   const { city, subdivision, postalCode } = billingInfo.address
 
    const nserieant = "TXXYYYY";
    const versaoant = "VXX";
@@ -1402,7 +1402,8 @@ const updateLicenceFromAutomation = async (billingInfo, buyerEmail, orderNumber,
    const cidade = city || "X";
    // const uf = subdivision || "XX";
    console.log("UF: ", subdivision);
-   const uf = "XX"; //TODO tratar truncate para 2 chars
+   const uf = getUF(subdivision) || "XX";
+   const cep = postalCode;
    const programa = "TOPOCAD";
    const valor = item.totalPrice.value;
    const nn = '1';
@@ -1420,6 +1421,7 @@ const updateLicenceFromAutomation = async (billingInfo, buyerEmail, orderNumber,
       pago,
       cidade,
       uf,
+      cep,
       cgc,
       email,
       programa,
@@ -1506,7 +1508,7 @@ const getNextNserie = async () => {
 const getAction = (productId) => {
    const actions = {
       "be31f5b4-10cf-7a61-db8c-7d468bbf7583": "create", //TOPOCAD2000 V19
-      "01df1086-d817-a377-f524-8a79b56547a2": "update", //TOPOCAD2000 V19 TESTE R$1,00
+      "01df1086-d817-a377-f524-8a79b56547a2": "create", //TOPOCAD2000 V19 TESTE R$1,00
       "6c7f7a4d-ae62-d25d-1d9d-877cec140a16": "update", //TOPOCAD2000 V18/V19 nserieant = TXXYYYY
       "eeee001c-4671-61d2-7756-bf5a676ace1c": "update", //TOPOCAD2000 V17/V19 nserieant = TXXYYYY
       "8ff9ec96-26df-4037-6a80-8d55b4151223": "update", //TOPOCAD2000 VXX/V19 nserieant = TXXYYYY
