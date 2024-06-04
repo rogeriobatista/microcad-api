@@ -62,7 +62,15 @@ routes.get('/apimicrocad',                             LicenseController.microca
 routes.get('/apimicrocadusu',                          LicenseController.microcadusu);
 //
 routes.get('/apiconregistronet/:id',                   LicenseController.conregistronet);
+// TOPOCAD
 routes.get('/apiconregistronetultimo',                 LicenseController.conregistronetultimo);
+// MEMORIALCAD
+routes.get('/api/memorialcad/conregistronetultimo',    LicenseController.memorialcadconregistronetultimo);
+// PERFIS2000
+routes.get('/api/perfis2000/conregistronetultimo',     LicenseController.perfis2000conregistronetultimo);
+// QFCAD2000
+routes.get('/api/qfcad2000/conregistronetultimo',      LicenseController.qfcad2000conregistronetultimo);
+
 routes.post('/apiupdregistronet',                      LicenseController.updregistronet);
 routes.get('/apidelregistronet/:id',                   LicenseController.delregistronet);
 routes.get('/apilisregistronet/:id1/:id2',             LicenseController.lisregistronet);
@@ -125,6 +133,5 @@ routes.post('/api/resptecs', LicenseController.upsertResptec);
 routes.put('/api/resptecs/:id', LicenseController.upsertResptec);
 routes.delete('/api/resptecs/:id', LicenseController.deleteResptec);
 /** API Wix Payment Status Update */
-routes.post('/api/wix-payment-status-update', LicenseController.wixPaymentStatusUpdate);
 routes.post('/api/wix-payload', LicenseController.wixPayLoad);
 export default routes;

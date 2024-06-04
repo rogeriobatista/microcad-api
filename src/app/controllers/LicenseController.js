@@ -402,6 +402,39 @@ class LicenseController {
       }
       return res.json({});
    }
+   // CONSULTA REGISTRONET MEMORIALCAD ULTIMO
+   async memorialcadconregistronetultimo(req, res) {
+      const registro = await TBLRegistronet.findOne({
+         order: [['nserie', 'DESC']],
+         where: { programa: "MEMORIALCAD" }
+      });
+      if (registro) {
+         return res.json(registro);
+      }
+      return res.json({});
+   }
+   // CONSULTA REGISTRONET PERFIS2000 ULTIMO
+   async perfis2000conregistronetultimo(req, res) {
+      const registro = await TBLRegistronet.findOne({
+         order: [['nserie', 'DESC']],
+         where: { programa: "PERFIS2000" }
+      });
+      if (registro) {
+         return res.json(registro);
+      }
+      return res.json({});
+   }
+   // CONSULTA REGISTRONET QFCAD2000 ULTIMO
+   async qfcad2000conregistronetultimo(req, res) {
+      const registro = await TBLRegistronet.findOne({
+         order: [['nserie', 'DESC']],
+         where: { programa: "QFCAD2000" }
+      });
+      if (registro) {
+         return res.json(registro);
+      }
+      return res.json({});
+   }
    // UPD REGISTRONET
    async updregistronet(req, res) {
       const { nserie, nome, nomereg, programa, tipo, versao, nserieant, versaoant, serial, dataenv, data, valor, desconto, frete, pago, codrastre, rua, bairro, cidade, uf, cep, cgc, telefone, email, emailcc, nn, pp, obs, } = req.body;
@@ -1252,40 +1285,6 @@ class LicenseController {
       return res.json(sucess);
    }
 
-
-   async wixPaymentStatusUpdate(req, res) {
-      return res.status(200).send();
-      // let event;
-      // let eventData;
-      // try {
-      //    // const rawPayload = jwt.verify(req.body, WIX_PUBLIC_KEY);
-      //    // event = JSON.parse(rawPayload.data);
-      //    // eventData = JSON.parse(event.data);
-      //    console.log("body: ", req.body);
-      //    event = req.body.data;
-      //    eventData = JSON.parse(event.data);
-      // } catch (err) {
-      //    console.error(err);
-      //    return res.status(400).send(`Webhook error: ${err.message}`);
-      // }
-      // switch (event.eventType) {
-      //    case "wix.ecom.v1.order_payment_status_updated":
-      //       console.log(`wix.ecom.v1.order_payment_status_updated event received with data:`, eventData);
-      //       const order = eventData.actionEvent.body.order;
-      //       order.lineItems.forEach(async (item) => {
-      //          const action = getAction(item.id);
-      //          switch (action) {
-      //             case "create": createLicense(order, item); break;
-      //          }
-      //       });
-      //       break;
-      //    default:
-      //       console.log(`Received unknown event type: ${event.eventType}`);
-      //       break;
-      // }
-      // return res.status(200).send();
-   }
-
    async wixPayLoad(req, res) {
       console.log("Webhook Payload: ", JSON.stringify(req.body));
       const { paymentStatus, orderNumber, buyerEmail, lineItems, billingInfo } = req.body.data;
@@ -1297,15 +1296,15 @@ class LicenseController {
 
       await Promise.all(lineItems.map(async (item) => {
          console.log("Item: ", JSON.stringify(item));
-         const action = getAction(item.catalogItemId);
+         const { action, program } = getAction(item.catalogItemId);
          console.log("Action: ", action);
          switch (action) {
             case "create": {
-               await createLicenseFromAutomation(billingInfo, buyerEmail, orderNumber, item);
+               await createLicenseFromAutomation(billingInfo, buyerEmail, orderNumber, item, program);
                break;
             }
             case "update": {
-               await updateLicenceFromAutomation(billingInfo, buyerEmail, orderNumber, item);
+               await updateLicenceFromAutomation(billingInfo, buyerEmail, orderNumber, item, program);
                break;
             }
          }
@@ -1316,8 +1315,8 @@ class LicenseController {
 
 }
 
-const createLicenseFromAutomation = async (billingInfo, buyerEmail, orderNumber, item) => {
-   const { nserie, lastVersion } = await getNextNserie();
+const createLicenseFromAutomation = async (billingInfo, buyerEmail, orderNumber, item, program) => {
+   const { nserie, lastVersion } = await getNextNserie(program);
 
    const { firstName, lastName, vatId } = billingInfo.contactDetails;
    const { city, subdivision, postalCode } = billingInfo.address
@@ -1334,7 +1333,7 @@ const createLicenseFromAutomation = async (billingInfo, buyerEmail, orderNumber,
    const cidade = city || "X";
    const uf = getUF(subdivision) || "XX";
    const cep = postalCode;
-   const programa = "TOPOCAD";
+   const programa = program;
    const valor = item.totalPrice.value;
    const nn = '1';
    const pp = "BR";
@@ -1381,14 +1380,13 @@ const getUF = (subdivision) => {
    return uf;
 }
 
-const updateLicenceFromAutomation = async (billingInfo, buyerEmail, orderNumber, item) => {
-   const { nserie, lastVersion } = await getNextNserie();
+const updateLicenceFromAutomation = async (billingInfo, buyerEmail, orderNumber, item, program) => {
+   const { nserie, lastVersion } = await getNextNserie(program);
 
    const { firstName, lastName, vatId } = billingInfo.contactDetails;
    const { city, subdivision, postalCode } = billingInfo.address
 
-   const nserieant = "TXXYYYY";
-   const versaoant = "VXX";
+   const { nserieant, versaoant } = getNserieAndVeraoAnt(program);
    const tipo = getType(vatId?.type);
    const versao = lastVersion;
    const email = buyerEmail;
@@ -1401,7 +1399,7 @@ const updateLicenceFromAutomation = async (billingInfo, buyerEmail, orderNumber,
    const cidade = city || "X";
    const uf = getUF(subdivision) || "XX";
    const cep = postalCode;
-   const programa = "TOPOCAD";
+   const programa = program;
    const valor = item.totalPrice.value;
    const nn = '1';
    const pp = "BR";
@@ -1448,59 +1446,15 @@ const updateLicenceFromAutomation = async (billingInfo, buyerEmail, orderNumber,
    await sendLicenseEmail(registro, cliente, uf);
 }
 
-const createLicense = async (order, item) => {
-   const { nserie, lastVersion } = await getNextNserie();
+const getNserieAndVeraoAnt = (program) => {
+   const values = {
+      "TOPOCAD": { nserieant: "TXXYYYY", versaoant: "VXX" },
+      "MEMORIALCAD": { nserieant: "MXXYYYY", versaoant: "MXX" },
+      "PERFIS2000": { nserieant: "PXXYYYY", versaoant: "PXX" },
+      "QFCAD2000": { nserieant: "QXXYYYY", versaoant: "QXX" }
+   };
 
-   const { firstName, lastName, vatId } = order.billingInfo.contactDetails;
-   const { city, subdivision } = order.billingInfo.address
-
-   const tipo = getType(vatId?.type);
-   const versao = lastVersion;
-   const email = order.buyerInfo.email;
-   const cliente = `${firstName} ${lastName}`;
-   const nome = cliente;
-   const nomereg = cliente;
-   const cgc = vatId?.id || "99999999999";
-   const data = new Date().toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit', year: '2-digit' });
-   const pago = `WIX-${order.number}`;
-   const cidade = city || "X";
-   const uf = subdivision || "XX";
-   const programa = "TOPOCAD";
-   const valor = item.price.amount;
-   const nn = '1';
-   const pp = "BR";
-
-   await TBLRegistronet.create({
-      nserie,
-      nome,
-      nomereg,
-      tipo,
-      versao,
-      data,
-      pago,
-      cidade,
-      uf,
-      cgc,
-      email,
-      programa,
-      valor,
-      nn,
-      pp
-   });
-
-   const registro = await TBLRegistro.create({
-      nserie,
-      tipo,
-      versao,
-      email,
-      cliente,
-      cgc,
-      cidade,
-      uf,
-      nn,
-      pp
-   });
-   await sendLicenseEmail(registro, cliente, uf);
+   return values[program];
 }
 
 const getType = (type) => {
@@ -1511,7 +1465,8 @@ const getNextNserie = async () => {
    const { nserie, versao } = await TBLRegistronet.findOne({
       order: [
          [col('nserie'), 'DESC']
-      ]
+      ],
+      where: { programa: program }
    });
    const onlyNumbers = nserie.replace(/([^0-9]+)/gi, "");
    const letter = nserie.replace(/([^a-zA-Z]+)/gi, "");
@@ -1520,23 +1475,23 @@ const getNextNserie = async () => {
 
 const getAction = (productId) => {
    const actions = {
-      "be31f5b4-10cf-7a61-db8c-7d468bbf7583": "create", //TOPOCAD2000 V19
-      "01df1086-d817-a377-f524-8a79b56547a2": "update", //TOPOCAD2000 V19 TESTE R$1,00
-      "6c7f7a4d-ae62-d25d-1d9d-877cec140a16": "update", //TOPOCAD2000 V18/V19 nserieant = TXXYYYY
-      "eeee001c-4671-61d2-7756-bf5a676ace1c": "update", //TOPOCAD2000 V17/V19 nserieant = TXXYYYY
-      "8ff9ec96-26df-4037-6a80-8d55b4151223": "update", //TOPOCAD2000 VXX/V19 nserieant = TXXYYYY
+      "be31f5b4-10cf-7a61-db8c-7d468bbf7583": { action: "create", program: "TOPOCAD" }, //TOPOCAD2000 V19
+      "01df1086-d817-a377-f524-8a79b56547a2": { action: "update", program: "TOPOCAD" }, //TOPOCAD2000 V19 TESTE R$1,00
+      "6c7f7a4d-ae62-d25d-1d9d-877cec140a16": { action: "update", program: "TOPOCAD" }, //TOPOCAD2000 V18/V19 nserieant = TXXYYYY
+      "eeee001c-4671-61d2-7756-bf5a676ace1c": { action: "update", program: "TOPOCAD" }, //TOPOCAD2000 V17/V19 nserieant = TXXYYYY
+      "8ff9ec96-26df-4037-6a80-8d55b4151223": { action: "update", program: "TOPOCAD" }, //TOPOCAD2000 VXX/V19 nserieant = TXXYYYY
 
-    //"6e262a99-bf61-e906-f029-6bdbd88f728a": "createM", //MEMORIALCAD V9
-    //"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx": "createM", //MEMORIALCAD V9 TESTE R$1,00
-    //"0b81a3d2-bbaf-0b3f-f9bc-ad58821f2eca": "updateM", //MEMORIALCAD VX/V9 nserieant = MXXYY
+      // "6e262a99-bf61-e906-f029-6bdbd88f728a": { action: "create", program: "MEMORIALCAD" }, //MEMORIALCAD V9
+      // "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx": { action: "create", program: "MEMORIALCAD" },  //MEMORIALCAD V9 TESTE R$1,00
+      // "0b81a3d2-bbaf-0b3f-f9bc-ad58821f2eca": { action: "update", program: "MEMORIALCAD" }, //MEMORIALCAD VX/V9 nserieant = MXXYY
 
-    //"3013644781": "createP", //PERFIS2000 V12
-    //"xxxxxxxxxx": "createP", //PERFIS2000 V12 TESTE R$1,00
-    //"4625346131": "updateP", //PERFIS2000 VXX/V12 nserieant = PXXYY
+      // "3013644781": { action: "create", program: "PERFIS2000" }, //PERFIS2000 V12
+      // "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx": { action: "create", program: "PERFIS2000" }, //PERFIS2000 V12 TESTE R$1,00
+      // "4625346131": { action: "update", program: "PERFIS2000" }, //PERFIS2000 VXX/V12 nserieant = PXXYY
 
-    //"3014244621": "createQ", //QFCAD2000 V6
-    //"xxxxxxxxxx": "createQ", //QFCAD2000 V6 TESTE R$1,00
-    //"4652686311": "updateQ", //QFCAD2000 VX/V6 nserieant = QXXYY
+      // "3014244621": { action: "create", program: "QFCAD2000" }, //QFCAD2000 V6
+      // "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx": { action: "create", program: "QFCAD2000" }, //QFCAD2000 V6 TESTE R$1,00
+      // "4652686311": { action: "update", program: "QFCAD2000" } //QFCAD2000 VX/V6 nserieant = QXXYY
 
    }
 
