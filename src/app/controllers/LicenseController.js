@@ -402,33 +402,33 @@ class LicenseController {
       }
       return res.json({});
    }
-   // CONSULTA REGISTRONET MEMORIALCAD ULTIMO
-   async memorialcadconregistronetultimo(req, res) {
+   // CONSULTA REGISTRONET MEMORIAL ULTIMO
+   async memorialconregistronetultimo(req, res) {
       const registro = await TBLRegistronet.findOne({
          order: [['nserie', 'DESC']],
-         where: { programa: "MEMORIALCAD" }
+         where: { programa: "MEMORIAL" }
       });
       if (registro) {
          return res.json(registro);
       }
       return res.json({});
    }
-   // CONSULTA REGISTRONET PERFIS2000 ULTIMO
-   async perfis2000conregistronetultimo(req, res) {
+   // CONSULTA REGISTRONET PERFIS ULTIMO
+   async perfisconregistronetultimo(req, res) {
       const registro = await TBLRegistronet.findOne({
          order: [['nserie', 'DESC']],
-         where: { programa: "PERFIS2000" }
+         where: { programa: "PERFIS" }
       });
       if (registro) {
          return res.json(registro);
       }
       return res.json({});
    }
-   // CONSULTA REGISTRONET QFCAD2000 ULTIMO
-   async qfcad2000conregistronetultimo(req, res) {
+   // CONSULTA REGISTRONET QFCAD ULTIMO
+   async qfcadconregistronetultimo(req, res) {
       const registro = await TBLRegistronet.findOne({
          order: [['nserie', 'DESC']],
-         where: { programa: "QFCAD2000" }
+         where: { programa: "QFCAD" }
       });
       if (registro) {
          return res.json(registro);
@@ -1449,9 +1449,9 @@ const updateLicenceFromAutomation = async (billingInfo, buyerEmail, orderNumber,
 const getNserieAndVeraoAnt = (program) => {
    const values = {
       "TOPOCAD": { nserieant: "TXXYYYY", versaoant: "VXX" },
-      "MEMORIALCAD": { nserieant: "MXXYYYY", versaoant: "MXX" },
-      "PERFIS2000": { nserieant: "PXXYYYY", versaoant: "PXX" },
-      "QFCAD2000": { nserieant: "QXXYYYY", versaoant: "QXX" }
+      "MEMORIAL": { nserieant: "MXXYYY", versaoant: "MXX" },
+      "PERFIS": { nserieant: "PXXYY", versaoant: "PXX" },
+      "QFCAD": { nserieant: "QXXYY", versaoant: "QXX" }
    };
 
    return values[program];
@@ -1481,17 +1481,17 @@ const getAction = (productId) => {
       "eeee001c-4671-61d2-7756-bf5a676ace1c": { action: "update", program: "TOPOCAD" }, //TOPOCAD2000 V17/V19 nserieant = TXXYYYY
       "8ff9ec96-26df-4037-6a80-8d55b4151223": { action: "update", program: "TOPOCAD" }, //TOPOCAD2000 VXX/V19 nserieant = TXXYYYY
 
-      // "6e262a99-bf61-e906-f029-6bdbd88f728a": { action: "create", program: "MEMORIALCAD" }, //MEMORIALCAD V9
-      // "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx": { action: "create", program: "MEMORIALCAD" },  //MEMORIALCAD V9 TESTE R$1,00
-      // "0b81a3d2-bbaf-0b3f-f9bc-ad58821f2eca": { action: "update", program: "MEMORIALCAD" }, //MEMORIALCAD VX/V9 nserieant = MXXYY
+      // "6e262a99-bf61-e906-f029-6bdbd88f728a": { action: "create", program: "MEMORIAL" }, //MEMORIALCAD V9
+      // "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx": { action: "create", program: "MEMORIAL" },  //MEMORIALCAD V9 TESTE R$1,00
+      // "0b81a3d2-bbaf-0b3f-f9bc-ad58821f2eca": { action: "update", program: "MEMORIAL" }, //MEMORIALCAD VX/V9 nserieant = MXXYY
 
-      // "3013644781": { action: "create", program: "PERFIS2000" }, //PERFIS2000 V12
-      // "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx": { action: "create", program: "PERFIS2000" }, //PERFIS2000 V12 TESTE R$1,00
-      // "4625346131": { action: "update", program: "PERFIS2000" }, //PERFIS2000 VXX/V12 nserieant = PXXYY
+      // "3013644781": { action: "create", program: "PERFIS" }, //PERFIS2000 V12
+      // "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx": { action: "create", program: "PERFIS" }, //PERFIS2000 V12 TESTE R$1,00
+      // "4625346131": { action: "update", program: "PERFIS" }, //PERFIS2000 VXX/V12 nserieant = PXXYY
 
-      // "3014244621": { action: "create", program: "QFCAD2000" }, //QFCAD2000 V6
-      // "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx": { action: "create", program: "QFCAD2000" }, //QFCAD2000 V6 TESTE R$1,00
-      // "4652686311": { action: "update", program: "QFCAD2000" } //QFCAD2000 VX/V6 nserieant = QXXYY
+      // "3014244621": { action: "create", program: "QFCAD" }, //QFCAD2000 V6
+      // "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx": { action: "create", program: "QFCAD" }, //QFCAD2000 V6 TESTE R$1,00
+      // "4652686311": { action: "update", program: "QFCAD" } //QFCAD2000 VX/V6 nserieant = QXXYY
 
    }
 

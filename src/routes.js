@@ -64,12 +64,12 @@ routes.get('/apimicrocadusu',                          LicenseController.microca
 routes.get('/apiconregistronet/:id',                   LicenseController.conregistronet);
 // TOPOCAD
 routes.get('/apiconregistronetultimo',                 LicenseController.conregistronetultimo);
-// MEMORIALCAD
-routes.get('/api/memorialcad/conregistronetultimo',    LicenseController.memorialcadconregistronetultimo);
-// PERFIS2000
-routes.get('/api/perfis2000/conregistronetultimo',     LicenseController.perfis2000conregistronetultimo);
-// QFCAD2000
-routes.get('/api/qfcad2000/conregistronetultimo',      LicenseController.qfcad2000conregistronetultimo);
+// MEMORIAL
+routes.get('/memorial/apiconregistronetultimo',       LicenseController.memorialconregistronetultimo);
+// PERFIS
+routes.get('/perfis/apiconregistronetultimo',         LicenseController.perfisconregistronetultimo);
+// QFCAD
+routes.get('/qfcad/apiconregistronetultimo',          LicenseController.qfcadconregistronetultimo);
 
 routes.post('/apiupdregistronet',                      LicenseController.updregistronet);
 routes.get('/apidelregistronet/:id',                   LicenseController.delregistronet);
