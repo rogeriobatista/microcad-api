@@ -1461,7 +1461,7 @@ const getType = (type) => {
    return type && type == 'CNPJ' ? 'B' : 'A';
 }
 
-const getNextNserie = async () => {
+const getNextNserie = async (program) => {
    const { nserie, versao } = await TBLRegistronet.findOne({
       order: [
          [col('nserie'), 'DESC']
