@@ -1481,17 +1481,17 @@ const getAction = (productId) => {
       "eeee001c-4671-61d2-7756-bf5a676ace1c": { action: "update", program: "TOPOCAD" }, //TOPOCAD2000 V17/V19 nserieant = TXXYYYY
       "8ff9ec96-26df-4037-6a80-8d55b4151223": { action: "update", program: "TOPOCAD" }, //TOPOCAD2000 VXX/V19 nserieant = TXXYYYY
 
-      // "6e262a99-bf61-e906-f029-6bdbd88f728a": { action: "create", program: "MEMORIAL" }, //MEMORIALCAD V9
-      // "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx": { action: "create", program: "MEMORIAL" },  //MEMORIALCAD V9 TESTE R$1,00
-      // "0b81a3d2-bbaf-0b3f-f9bc-ad58821f2eca": { action: "update", program: "MEMORIAL" }, //MEMORIALCAD VX/V9 nserieant = MXXYY
+      "6e262a99-bf61-e906-f029-6bdbd88f728a": { action: "create", program: "MEMORIAL" }, //MEMORIALCAD V9
+      "d530e78e-cd16-f799-f7ca-797a137da267": { action: "create", program: "MEMORIAL" }, //MEMORIALCAD V9 TESTE R$1,00
+      "0b81a3d2-bbaf-0b3f-f9bc-ad58821f2eca": { action: "update", program: "MEMORIAL" }, //MEMORIALCAD VX/V9 nserieant = MXXYY
 
-      // "3013644781": { action: "create", program: "PERFIS" }, //PERFIS2000 V12
-      // "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx": { action: "create", program: "PERFIS" }, //PERFIS2000 V12 TESTE R$1,00
-      // "4625346131": { action: "update", program: "PERFIS" }, //PERFIS2000 VXX/V12 nserieant = PXXYY
+      "3013644781": { action: "create", program: "PERFIS" }, //PERFIS2000 V12
+      "c0e38d0d-01d1-7200-7717-ca17c4e6a9bc": { action: "create", program: "PERFIS" }, //PERFIS2000 V12 TESTE R$1,00
+      "4625346131": { action: "update", program: "PERFIS" }, //PERFIS2000 VXX/V12 nserieant = PXXYY
 
-      // "3014244621": { action: "create", program: "QFCAD" }, //QFCAD2000 V6
-      // "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx": { action: "create", program: "QFCAD" }, //QFCAD2000 V6 TESTE R$1,00
-      // "4652686311": { action: "update", program: "QFCAD" } //QFCAD2000 VX/V6 nserieant = QXXYY
+      "3014244621": { action: "create", program: "QFCAD" }, //QFCAD2000 V6
+      "709623d7-7f91-13d2-44e4-ff823b4a6294": { action: "create", program: "QFCAD" }, //QFCAD2000 V6 TESTE R$1,00
+      "4652686311": { action: "update", program: "QFCAD" } //QFCAD2000 VX/V6 nserieant = QXXYY
 
    }
 
