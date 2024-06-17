@@ -1372,7 +1372,7 @@ const createLicenseFromAutomation = async (billingInfo, buyerEmail, orderNumber,
 
    console.log("License number: ", registro.nserie);
 
-   await sendLicenseEmail(registro, cliente, uf);
+   await sendLicenseEmail(registro, cliente, uf, program);
 }
 
 const getUF = (subdivision) => {
@@ -1386,7 +1386,7 @@ const updateLicenceFromAutomation = async (billingInfo, buyerEmail, orderNumber,
    const { firstName, lastName, vatId } = billingInfo.contactDetails;
    const { city, subdivision, postalCode } = billingInfo.address
 
-   const { nserieant, versaoant } = getNserieAndVeraoAnt(program);
+   const { nserieant, versaoant } = getNserieAndVersaoAnt(program);
    const tipo = getType(vatId?.type);
    const versao = lastVersion;
    const email = buyerEmail;
@@ -1443,10 +1443,10 @@ const updateLicenceFromAutomation = async (billingInfo, buyerEmail, orderNumber,
 
    console.log("License number: ", registro.nserie);
 
-   await sendLicenseEmail(registro, cliente, uf);
+   await sendLicenseEmail(registro, cliente, uf, program);
 }
 
-const getNserieAndVeraoAnt = (program) => {
+const getNserieAndVersaoAnt = (program) => {
    const values = {
       "TOPOCAD": { nserieant: "TXXYYYY", versaoant: "VXX" },
       "MEMORIAL": { nserieant: "MXXYYY", versaoant: "MXX" },
@@ -1498,7 +1498,7 @@ const getAction = (productId) => {
    return actions[productId];
 }
 
-const sendLicenseEmail = async (registro, nome, uf) => {
+const sendLicenseEmail = async (registro, nome, uf, programa) => {
    const { cgc, email, versao, nserie } = registro;
    const transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
@@ -1510,14 +1510,16 @@ const sendLicenseEmail = async (registro, nome, uf) => {
       },
    });
 
+   const programName = getProgramName(programa);
+
    var mailOptions = {
       from: '"MICROCAD-Computação Grafica e Sistemas" <microcad.adm@gmail.com>',
       to: `${email}, comercial@topocad2000.com.br`,
-      subject: `TOPOCAD2000 ${versao} - ${nserie} * CHAVE VIRTUAL`,
-      text: `*TOPOCAD2000 ${versao} - ${nserie} >>> ${nome}-${uf}
-      1-Clique no link a seguir para baixar / instalar / atualizar TOPOCAD2000 ${versao} (caso ainda não tenha feito).
-      https://www.topocad2000.com.br/downloads/TOPOCAD2000${versao}.exe 
-      2-Abra o AutoCAD / BricsCAD / GstarCAD / ZwCAD, acesse um menu do TOPOCAD2000 e clique em MICROCAD
+      subject: `${programName} ${versao} - ${nserie} * CHAVE VIRTUAL`,
+      text: `*${programName} ${versao} - ${nserie} >>> ${nome}-${uf}
+      1-Clique no link a seguir para baixar / instalar / atualizar ${programName} ${versao} (caso ainda não tenha feito).
+      https://www.topocad2000.com.br/downloads/${programName}${versao}.exe 
+      2-Abra o AutoCAD / BricsCAD / GstarCAD / ZwCAD, acesse um menu do ${programName} e clique em MICROCAD
       3-Clique em HABILITAR PARA CHAVE VIRTUAL.
       4-Informe o NUMERO DE SERIE / EMAIL / CPF ou CNPJ.
       Número de Série: >>> ${nserie} <<< TIPO =A (CPF) =B (CNPJ)
@@ -1534,6 +1536,15 @@ const sendLicenseEmail = async (registro, nome, uf) => {
          return res.send({ status: true })
       }
    });
+}
+
+const getProgramName = (program) => {
+   switch (program) {
+      case "TOPOCAD": return "TOPOCAD2000";
+      case "MEMORIAL": return "MEMORIALCAD";
+      case "PERFIS": return "PERFIS2000";
+      case "QFCAD": return "QFCAD2000"
+   }
 }
 
 export default new LicenseController();
