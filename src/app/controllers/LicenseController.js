@@ -1470,7 +1470,8 @@ const getNextNserie = async (program) => {
    });
    const onlyNumbers = nserie.replace(/([^0-9]+)/gi, "");
    const letter = nserie.replace(/([^a-zA-Z]+)/gi, "");
-   return { nserie: `${letter}${Number(onlyNumbers) + 1}`, lastVersion: versao };
+   const extraDigit = program == "QFCAD" ? "0" : "";
+   return { nserie: `${letter}${extraDigit}${Number(onlyNumbers) + 1}`, lastVersion: versao };
 }
 
 const getAction = (productId) => {
