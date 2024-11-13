@@ -35,6 +35,8 @@ class TBLRegistronet extends Model {
             nn: Sequelize.STRING,
             pp: Sequelize.STRING,
             obs: Sequelize.STRING,
+            nfe: Sequelize.STRING,
+            hora: Sequelize.STRING,
          },
          {
             sequelize,
