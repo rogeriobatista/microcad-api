@@ -22,6 +22,16 @@ import TBXimovel from '../models/TBXimovel';
 import TBXproprieta from '../models/TBXproprieta';
 import TBXresptec from '../models/TBXresptec';
 
+const emailConfig = {
+   host: 'smtp.gmail.com',
+   secure: false,
+   port: 587,
+   auth: {
+      user: 'microcad.adm@gmail.com',
+      pass: 'twzsrpcjczqihneu'
+   },
+};
+
 const WIX_PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3oGVOgcYuK2RfY6OKUBT
 yu37dqNJyyhs/jWX6N/89dFLmXMCtqv9hTCOOYXG9MFHCtmqmS6zR6nM/Eh683fx
@@ -52,15 +62,7 @@ class LicenseController {
 
       const { cgc, email, versao, nserie, nome, uf } = req.body
 
-      const transporter = nodemailer.createTransport({
-         host: 'smtp.gmail.com',
-         secure: false,
-         port: 587,
-         auth: {
-            user: 'microcad.adm@gmail.com',
-            pass: 'twzsrpcjczqihneu'
-         },
-      });
+      const transporter = nodemailer.createTransport(emailConfig);
 
       var mailOptions = {
          from: '"MICROCAD-Computação Grafica e Sistemas" <microcad.adm@gmail.com>',
@@ -1505,15 +1507,7 @@ const getAction = (productId) => {
 
 const sendLicenseEmail = async (registro, nome, uf, programa) => {
    const { cgc, email, versao, nserie } = registro;
-   const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      secure: false,
-      port: 587,
-      auth: {
-         user: 'microcad.adm@gmail.com',
-         pass: 'cvsqizatsjqelemi'
-      },
-   });
+   const transporter = nodemailer.createTransport(emailConfig);
 
    const programName = getProgramName(programa);
 
