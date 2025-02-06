@@ -66,7 +66,7 @@ class LicenseController {
 
       var mailOptions = {
          from: '"MICROCAD-Computação Grafica e Sistemas" <microcad.adm@gmail.com>',
-         to: `${email}, contato@topocad2000.com.br`,
+         to: `${email}, microcad@amicrocad.com.br`,
          subject: `TOPOCAD2000 ${versao} - ${nserie} * CHAVE VIRTUAL`,
          text: `*TOPOCAD2000 ${versao} - ${nserie} >>> ${nome}-${uf}
          1-Clique no link a seguir para baixar / instalar / atualizar TOPOCAD2000 ${versao} (caso ainda não tenha feito).
@@ -1513,7 +1513,7 @@ const sendLicenseEmail = async (registro, nome, uf, programa) => {
 
    var mailOptions = {
       from: '"MICROCAD-Computação Grafica e Sistemas" <microcad.adm@gmail.com>',
-      to: `${email}, comercial@topocad2000.com.br`,
+      to: `${email}, microcad@amicrocad.com.br`,
       subject: `${programName} ${versao} - ${nserie} * CHAVE VIRTUAL`,
       text: `*${programName} ${versao} - ${nserie} >>> ${nome}-${uf}
       1-Clique no link a seguir para baixar / instalar / atualizar ${programName} ${versao} (caso ainda não tenha feito).
