@@ -70,7 +70,7 @@ class LicenseController {
          subject: `TOPOCAD2000 ${versao} - ${nserie} * CHAVE VIRTUAL`,
          text: `*TOPOCAD2000 ${versao} - ${nserie} >>> ${nome}-${uf}
          1-Clique no link a seguir para baixar / instalar / atualizar TOPOCAD2000 ${versao} (caso ainda não tenha feito).
-         https://microcad.blob.core.windows.net/downloads/TOPOCAD2000${versao}.EXE 
+         https://microcad.blob.core.windows.net/downloads/TOPOCAD2000${versao}.exe
          2-Abra o AutoCAD / BricsCAD / GstarCAD / ZwCAD, acesse um menu do TOPOCAD2000 e clique em MICROCAD
          3-Clique em HABILITAR PARA CHAVE VIRTUAL.
          4-Informe o NUMERO DE SERIE / EMAIL / CPF ou CNPJ.
@@ -1517,7 +1517,7 @@ const sendLicenseEmail = async (registro, nome, uf, programa) => {
       subject: `${programName} ${versao} - ${nserie} * CHAVE VIRTUAL`,
       text: `*${programName} ${versao} - ${nserie} >>> ${nome}-${uf}
       1-Clique no link a seguir para baixar / instalar / atualizar ${programName} ${versao} (caso ainda não tenha feito).
-      https://microcad.blob.core.windows.net/downloads/${programName}${versao}.EXE 
+      https://microcad.blob.core.windows.net/downloads/${programName}${versao}.exe
       2-Abra o AutoCAD / BricsCAD / GstarCAD / ZwCAD, acesse um menu do ${programName} e clique em MICROCAD
       3-Clique em HABILITAR PARA CHAVE VIRTUAL.
       4-Informe o NUMERO DE SERIE / EMAIL / CPF ou CNPJ.
