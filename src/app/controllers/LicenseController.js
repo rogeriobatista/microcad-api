@@ -365,7 +365,7 @@ class LicenseController {
             { nserie: 'REGV01', uname: 'FELIX', cname: 'FELIX-PC5' },
             { nserie: 'REGV01', uname: 'CACOB', cname: 'RICARDO-PC' },
             { nserie: 'REGV01', uname: 'RICARDO MELO', cname: 'RICARDO-PC' },
-            { nserie: 'REGV01', uname: 'Adriano', cname: 'DESKTOOP' },
+            { nserie: 'REGV01', uname: 'ADRIANO', cname: 'DESKTOOP' },
             { nserie: 'REGV01', uname: 'ROGERIO BATISTA', cname: 'DESKTOP-J5RQF1S' }
          ]
       const valid = licences.some(x => x.nserie == nserie && x.uname == uname && x.cname == cname)
