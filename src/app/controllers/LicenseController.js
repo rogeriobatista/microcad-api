@@ -363,7 +363,7 @@ class LicenseController {
             { nserie: 'REGV01', uname: 'FELIX', cname: 'FELIX-PC3' },
             { nserie: 'REGV01', uname: 'FELIX', cname: 'FELIX-PC4' },
             { nserie: 'REGV01', uname: 'FELIX', cname: 'FELIX-PC5' },
-            { nserie: 'REGV01', uname: 'CACOB', cname: 'RICARDO-PC' },
+            { nserie: 'REGV01', uname: 'CACOB', cname: 'NB-DELL-RICARDO' },
             { nserie: 'REGV01', uname: 'RICARDO MELO', cname: 'RICARDO-PC' },
             { nserie: 'REGV01', uname: 'ADRIANO', cname: 'DESKTOOP' },
             { nserie: 'REGV01', uname: 'ADMINISTRATIVO3', cname: 'DESKTOP-45RCPST' },
