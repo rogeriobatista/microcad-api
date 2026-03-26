@@ -441,7 +441,7 @@ class LicenseController {
    }
    // UPD REGISTRONET
    async updregistronet(req, res) {
-      const { nserie, nome, nomereg, programa, tipo, versao, nserieant, versaoant, serial, dataenv, data, valor, desconto, frete, pago, codrastre, rua, bairro, cidade, uf, cep, cgc, telefone, email, emailcc, nn, pp, obs,nfe,hora } = req.body;
+      const { nserie, nome, nomereg, programa, tipo, versao, nserieant, versaoant, serial, dataenv, data, valor, desconto, frete, pago, codrastre, rua, bairro, cidade, uf, cep, cgc, telefone, email, emailcc, nn, pp, obs,nfe,hora,fgbts } = req.body;
       const registro = await TBLRegistronet.findByPk(nserie);
       if (registro) {
          await TBLRegistronet.update(
@@ -476,6 +476,7 @@ class LicenseController {
                obs,
                nfe,
                hora,
+               fgbts,
             },
             { where: { nserie } }
          );
@@ -513,6 +514,7 @@ class LicenseController {
          obs,
          nfe,
          hora,
+         fgbts,
       });
       return res.json(addRecord);
    }
