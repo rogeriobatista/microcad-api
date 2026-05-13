@@ -1328,8 +1328,11 @@ class LicenseController {
 const createLicenseFromAutomation = async (billingInfo, buyerEmail, orderNumber, item, program) => {
    const { nserie, lastVersion } = await getNextNserie(program);
 
-   const { firstName, lastName, vatId } = billingInfo.contactDetails;
-   const { city, subdivision, postalCode } = billingInfo.address
+// const { firstName, lastName, vatId } = billingInfo.contactDetails;
+   const { firstName, lastName, vatId } = billingInfo.contactDetails || {};
+
+// const { city, subdivision, postalCode } = billingInfo.address
+   const { city, subdivision, postalCode } = billingInfo.address || {};
 
    const tipo = getType(vatId?.type);
    const versao = lastVersion;
@@ -1343,7 +1346,9 @@ const createLicenseFromAutomation = async (billingInfo, buyerEmail, orderNumber,
    const pago = `WIX-${orderNumber}`;
    const cidade = city || "X";
    const uf = getUF(subdivision) || "XX";
-   const cep = postalCode;
+// const cep = postalCode;
+   const cep = postalCode || "00000-000";
+
    const programa = program;
    const valor = item.totalPrice.value;
    const nn = '1';
@@ -1386,18 +1391,28 @@ const createLicenseFromAutomation = async (billingInfo, buyerEmail, orderNumber,
    await sendLicenseEmail(registro, cliente, uf, program);
 }
 
+//const getUF = (subdivision) => {
+//   const [country, uf] = subdivision.split("-");
+//   return uf;
+//}
 const getUF = (subdivision) => {
-   const [country, uf] = subdivision.split("-");
-   return uf;
+   if (!subdivision) return "XX";
+   const parts = subdivision.split("-");
+   return parts[1] || "XX";
 }
 
 const updateLicenceFromAutomation = async (billingInfo, buyerEmail, orderNumber, item, program) => {
    const { nserie, lastVersion } = await getNextNserie(program);
 
-   const { firstName, lastName, vatId } = billingInfo.contactDetails;
-   const { city, subdivision, postalCode } = billingInfo.address
+// const { firstName, lastName, vatId } = billingInfo.contactDetails;
+   const { firstName, lastName, vatId } = billingInfo.contactDetails || {};
 
-   const { nserieant, versaoant } = getNserieAndVersaoAnt(program);
+// const { city, subdivision, postalCode } = billingInfo.address
+   const { city, subdivision, postalCode } = billingInfo.address || {};
+
+// const { nserieant, versaoant } = getNserieAndVersaoAnt(program);
+   const { nserieant, versaoant } = getNserieAndVersaoAnt(program) || {};
+
    const tipo = getType(vatId?.type);
    const versao = lastVersion;
    const email = buyerEmail;
@@ -1410,7 +1425,9 @@ const updateLicenceFromAutomation = async (billingInfo, buyerEmail, orderNumber,
    const pago = `WIX-${orderNumber}`;
    const cidade = city || "X";
    const uf = getUF(subdivision) || "XX";
-   const cep = postalCode;
+// const cep = postalCode;
+   const cep = postalCode || "00000-000";
+
    const programa = program;
    const valor = item.totalPrice.value;
    const nn = '1';
