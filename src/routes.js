@@ -36,6 +36,7 @@ routes.get('/api/atualiza',                            LicenseController.atualiz
 routes.post('/api/atualiza/update',                    LicenseController.atualizaUpdate);
 routes.get('/api/dadosdat',                            LicenseController.dadosdat);
 routes.get('/api/dadosins',                            LicenseController.dadosins);
+routes.get('/api/dadosins/serie/:nserie',              LicenseController.dadosinsSerie);
 routes.post('/api/dadosins/update',                    LicenseController.updateDadosins);
 routes.get('/api/dadosins/delete/:id',                 LicenseController.deleteDadosins);
 routes.get('/api/dadosdatmail',                        LicenseController.dadosdatmail);

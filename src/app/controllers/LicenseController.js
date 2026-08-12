@@ -108,6 +108,21 @@ class LicenseController {
       }))
    }
 
+   async dadosinsSerie(req, res) {
+      const { nserie } = req.params
+
+      return res.json(await TBLDadosins.findAll({
+         where: {
+            nserie0: {
+               [Op.like]: `${nserie}%`
+            }
+         },
+         order: [
+            [col('nserie0'), 'DESC']
+         ]
+      }))
+   }
+   
    async updateDadosins(req, res) {
       const { registros } = req.body
 
