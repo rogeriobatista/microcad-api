@@ -41,6 +41,139 @@ z5G0e5qhZ2opHeh4JBhxmKQ2R/53GNf/Pp6indTQ+KqhCuOJX3m1iaOcDElDBMpD
 DCKC4BCrK5mJllE4sxGx2XWhPOrwpjqo77nLxJQBwT7p7rVdxciyxO/G92rFVXEY
 dwIDAQAB
 -----END PUBLIC KEY-----`;
+
+// ===================== MERCADO LIVRE - FASE 1 =====================
+import https from 'https';
+
+const ML_CLIENT_ID     = process.env.ML_CLIENT_ID;
+const ML_CLIENT_SECRET = process.env.ML_CLIENT_SECRET;
+const ML_REDIRECT_URI  = process.env.ML_REDIRECT_URI;
+const ML_AVISO_EMAIL   = process.env.ML_AVISO_EMAIL || 'microcad@amicrocad.com.br';
+
+// De qual anuncio veio a venda (so para dar nome no e-mail).
+// Anuncio fora desta lista continua avisando normalmente.
+const ML_ANUNCIOS = {
+   'MLB6549170934': 'TOPOCAD2000',
+   'MLB4587279529': 'MEMORIALCAD',
+};
+
+let mlAccessToken  = null;
+let mlTokenExpira  = 0;
+let mlRefreshToken = process.env.ML_REFRESH_TOKEN || null;
+
+// evita e-mail repetido quando o ML reenvia a mesma notificacao
+const mlAvisados = new Set();
+
+const mlHttp = (opcoes, corpo) => new Promise((resolve, reject) => {
+   const req = https.request(opcoes, (resp) => {
+      let dados = '';
+      resp.on('data', (p) => { dados += p; });
+      resp.on('end', () => {
+         try { resolve(JSON.parse(dados || '{}')); }
+         catch (e) { reject(new Error('Resposta invalida do ML: ' + dados)); }
+      });
+   });
+   req.on('error', reject);
+   if (corpo) req.write(corpo);
+   req.end();
+});
+
+const mlPost = (caminho, params) => {
+   const corpo = new URLSearchParams(params).toString();
+   return mlHttp({
+      hostname: 'api.mercadolibre.com',
+      path: caminho,
+      method: 'POST',
+      headers: {
+         'Content-Type': 'application/x-www-form-urlencoded',
+         'Content-Length': Buffer.byteLength(corpo),
+         'Accept': 'application/json',
+      },
+   }, corpo);
+};
+
+const mlToken = async () => {
+   if (mlAccessToken && Date.now() < mlTokenExpira) return mlAccessToken;
+   if (!mlRefreshToken) throw new Error('ML sem refresh token. Refaca a autorizacao.');
+
+   const r = await mlPost('/oauth/token', {
+      grant_type: 'refresh_token',
+      client_id: ML_CLIENT_ID,
+      client_secret: ML_CLIENT_SECRET,
+      refresh_token: mlRefreshToken,
+   });
+
+   if (!r.access_token) throw new Error('Falha ao renovar token ML: ' + JSON.stringify(r));
+
+   mlAccessToken = r.access_token;
+   mlTokenExpira = Date.now() + ((r.expires_in || 21600) - 300) * 1000;
+   if (r.refresh_token) {
+      mlRefreshToken = r.refresh_token;
+      console.log('ML NOVO REFRESH TOKEN >>>', mlRefreshToken);
+   }
+   return mlAccessToken;
+};
+
+const mlGet = async (caminho) => {
+   const token = await mlToken();
+   return mlHttp({
+      hostname: 'api.mercadolibre.com',
+      path: caminho,
+      method: 'GET',
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+   });
+};
+
+const mlAvisaVenda = async (pedido) => {
+   const itens = (pedido.order_items || []).map((it) => {
+      const id    = it.item?.id || '?';
+      const nome  = ML_ANUNCIOS[id] || '(anuncio nao mapeado)';
+      const titulo = it.item?.title || '';
+      const qtd   = it.quantity || 1;
+      const preco = it.unit_price || 0;
+      return `   ${nome} | ${titulo}\n   Anuncio: ${id} | Qtd: ${qtd} | Unit: R$ ${preco}`;
+   }).join('\n\n');
+
+   let compradorDoc = '(nao disponivel)';
+   try {
+      const bid = pedido.buyer?.billing_info?.id;
+      if (bid) {
+         const bi = await mlGet(`/orders/billing-info/MLB/${bid}`);
+         const b  = bi.buyer?.billing_info || {};
+         const doc = b.identification || {};
+         compradorDoc = `${b.name || ''} ${b.last_name || ''} - ${doc.type || ''} ${doc.number || ''}`.trim();
+      }
+   } catch (e) {
+      console.log('ML billing_info falhou:', e.message);
+   }
+
+   const texto =
+`VENDA NO MERCADO LIVRE
+
+Pedido: ${pedido.id}
+Data:   ${pedido.date_created || ''}
+Status: ${pedido.status} / pagamento: ${pedido.status_detail || ''}
+Total:  R$ ${pedido.total_amount || 0}   Pago: R$ ${pedido.paid_amount || 0}
+
+Comprador: ${pedido.buyer?.nickname || ''} (id ${pedido.buyer?.id || ''})
+Documento: ${compradorDoc}
+
+Itens:
+${itens}
+
+Responda o comprador pelo Mercado Livre.`;
+
+   const transporter = nodemailer.createTransport(emailConfig);
+   await transporter.sendMail({
+      from: '"MICROCAD-Computação Grafica e Sistemas" <microcad.adm@gmail.com>',
+      to: ML_AVISO_EMAIL,
+      subject: `VENDA ML - pedido ${pedido.id} - ${pedido.status}`,
+      text: texto,
+   });
+   console.log('ML aviso enviado do pedido', pedido.id);
+};
+// =================== FIM MERCADO LIVRE - FASE 1 ===================
+
 class LicenseController {
 
    async search(req, res) {
@@ -1340,6 +1473,53 @@ class LicenseController {
 
 }
 
+   async mlCallback(req, res) {
+      const { code } = req.query;
+      if (!code) return res.status(400).send('Faltou o parametro code.');
+      try {
+         const r = await mlPost('/oauth/token', {
+            grant_type: 'authorization_code',
+            client_id: ML_CLIENT_ID,
+            client_secret: ML_CLIENT_SECRET,
+            code,
+            redirect_uri: ML_REDIRECT_URI,
+         });
+         if (!r.refresh_token) return res.status(400).send('Erro ML: ' + JSON.stringify(r));
+
+         mlAccessToken  = r.access_token;
+         mlTokenExpira  = Date.now() + ((r.expires_in || 21600) - 300) * 1000;
+         mlRefreshToken = r.refresh_token;
+
+         return res.send(
+            '<h3>Autorizado.</h3><p>Copie o valor abaixo e salve no Azure ' +
+            'como a variavel ML_REFRESH_TOKEN:</p><pre>' + r.refresh_token + '</pre>'
+         );
+      } catch (e) {
+         console.log('mlCallback erro:', e.message);
+         return res.status(500).send('Erro: ' + e.message);
+      }
+   }
+
+   async mlWebhook(req, res) {
+      res.status(200).send();          // responde na hora, o ML exige
+
+      try {
+         const { topic, resource } = req.body || {};
+         if (topic !== 'orders_v2' || !resource) return;
+
+         const pedidoId = String(resource).split('/').pop();
+         const pedido   = await mlGet(`/orders/${pedidoId}`);
+
+         const chave = `${pedidoId}-${pedido.status}`;
+         if (mlAvisados.has(chave)) return;
+         mlAvisados.add(chave);
+
+         await mlAvisaVenda(pedido);
+      } catch (e) {
+         console.log('mlWebhook erro:', e.message);
+      }
+   }
+   
 const createLicenseFromAutomation = async (billingInfo, buyerEmail, orderNumber, item, program) => {
    const { nserie, lastVersion } = await getNextNserie(program);
 
