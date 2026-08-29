@@ -1471,7 +1471,7 @@ class LicenseController {
       return res.status(200).send();
    }
 
-}
+
 
    async mlCallback(req, res) {
       const { code } = req.query;
@@ -1519,6 +1519,7 @@ class LicenseController {
          console.log('mlWebhook erro:', e.message);
       }
    }
+}
    
 const createLicenseFromAutomation = async (billingInfo, buyerEmail, orderNumber, item, program) => {
    const { nserie, lastVersion } = await getNextNserie(program);
