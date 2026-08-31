@@ -172,6 +172,60 @@ Responda o comprador pelo Mercado Livre.`;
    });
    console.log('ML aviso enviado do pedido', pedido.id);
 };
+
+const mlPostAuth = async (caminho, objeto) => {
+   const token = await mlToken();
+   const corpo = JSON.stringify(objeto);
+   return mlHttp({
+      hostname: 'api.mercadolibre.com',
+      path: caminho,
+      method: 'POST',
+      headers: {
+         Authorization: `Bearer ${token}`,
+         'Content-Type': 'application/json',
+         'Content-Length': Buffer.byteLength(corpo),
+         Accept: 'application/json',
+      },
+   }, corpo);
+};
+
+const mlEnviaMensagem = async (pedido) => {
+   const packId      = pedido.pack_id || pedido.id;
+   const vendedorId  = pedido.seller && pedido.seller.id;
+   const compradorId = pedido.buyer && pedido.buyer.id;
+
+   if (!vendedorId || !compradorId) {
+      console.log('ML mensagem: pedido sem vendedor ou comprador', pedido.id);
+      return;
+   }
+
+   const primeiro = (pedido.order_items || [])[0];
+   const itemId   = primeiro && primeiro.item && primeiro.item.id;
+   const programa = ML_ANUNCIOS[itemId]
+                 || (primeiro && primeiro.item && primeiro.item.title)
+                 || 'seu produto';
+
+   const texto =
+`Olá! Obrigado pela sua compra do ${programa}.
+
+Seu pedido foi confirmado e já estamos preparando o seu número de série.
+Em breve enviaremos por aqui o serial e as instruções de instalação e ativação.
+
+Qualquer dúvida, é só responder esta mensagem.
+
+MICROCAD - Computação Gráfica e Sistemas`;
+
+   const r = await mlPostAuth(
+      `/messages/packs/${packId}/sellers/${vendedorId}?tag=post_sale`,
+      {
+         from: { user_id: String(vendedorId) },
+         to:   { user_id: String(compradorId) },
+         text: texto,
+      }
+   );
+
+   console.log('ML mensagem pedido', pedido.id, '>>>', JSON.stringify(r));
+};
 // =================== FIM MERCADO LIVRE - FASE 1 ===================
 
 class LicenseController {
@@ -1515,6 +1569,9 @@ class LicenseController {
          mlAvisados.add(chave);
 
          await mlAvisaVenda(pedido);
+
+         if (pedido.status === 'paid') await mlEnviaMensagem(pedido);
+
       } catch (e) {
          console.log('mlWebhook erro:', e.message);
       }
