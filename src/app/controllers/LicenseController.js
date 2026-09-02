@@ -28,7 +28,7 @@ const emailConfig = {
    port: 587,
    auth: {
       user: 'microcad.adm@gmail.com',
-      pass: 'twzsrpcjczqihneu'
+      pass: 'wbrqvrrcmabjfeoy'
    },
 };
 
