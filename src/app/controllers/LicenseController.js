@@ -209,9 +209,12 @@ const mlEnviaMensagem = async (pedido) => {
 `Olá! Obrigado pela sua compra do ${programa}.
 
 Seu pedido foi confirmado e já estamos preparando o seu número de série.
-Em breve enviaremos por aqui o serial e as instruções de instalação e ativação.
 
-Qualquer dúvida, é só responder esta mensagem.
+>>> IMPORTANTE: RESPONDA ESTA MENSAGEM INFORMANDO O SEU E-MAIL <
+
+O E-MAIL É OBRIGATÓRIO PARA ENVIO DA LICENÇA E INSTRUÇÕES.
+
+Assim que recebermos, enviaremos o serial e as instruções de instalação.
 
 MICROCAD - Computação Gráfica e Sistemas`;
 
