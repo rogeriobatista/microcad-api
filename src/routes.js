@@ -75,6 +75,8 @@ routes.get('/qfcad/apiconregistronetultimo',          LicenseController.qfcadcon
 routes.post('/apiupdregistronet',                      LicenseController.updregistronet);
 routes.get('/apidelregistronet/:id',                   LicenseController.delregistronet);
 routes.get('/apilisregistronet/:id1/:id2',             LicenseController.lisregistronet);
+
+routes.post('/apiupdcadastro',                         LicenseController.updcadastro);
 //
 routes.get('/apiconregistro/:id',                      LicenseController.conregistro);
 routes.get('/apiconregistrova/:id',                    LicenseController.conregistrova);

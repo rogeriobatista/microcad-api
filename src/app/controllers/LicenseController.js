@@ -752,6 +752,64 @@ class LicenseController {
       return res.json({});
    }
    //
+   // ATUALIZA CPF/CNPJ E EMAIL CURINGA - REGISTRO + REGISTRONET
+   // Usada pela tela HABILITAR CHAVE VIRTUAL quando o cadastro esta com
+   // CPF 99999999999 e/ou email contato@topocad2000.com.br.
+   // Campos independentes: atualiza somente o que vier no body.
+   async updcadastro(req, res) {
+      const { nserie } = req.body;
+      let { cgc, email } = req.body;
+
+      if (!nserie) {
+         return res.status(400).json({ ok: false, msg: 'NSERIE OBRIGATORIO' });
+      }
+
+      const campos = {};
+
+      if (cgc) {
+         cgc = String(cgc).replace(/\D/g, '');
+         if (cgc.length === 11 || cgc.length === 14) {
+            campos.cgc = cgc;
+         }
+      }
+
+      if (email) {
+         email = String(email).trim().toLowerCase();
+         if (email.length > 4 && email.indexOf('@') > 0) {
+            campos.email = email;
+         }
+      }
+
+      if (Object.keys(campos).length === 0) {
+         return res.json({ ok: false, msg: 'NADA A ATUALIZAR' });
+      }
+
+      const registro = await TBLRegistro.findByPk(nserie);
+      const registronet = await TBLRegistronet.findByPk(nserie);
+
+      if (!registro && !registronet) {
+         return res.json({ ok: false, msg: 'NSERIE NAO ENCONTRADO' });
+      }
+
+      if (registro) {
+         await TBLRegistro.update(campos, { where: { nserie } });
+      }
+      if (registronet) {
+         await TBLRegistronet.update(campos, { where: { nserie } });
+      }
+
+      console.log('UPDCADASTRO', nserie, JSON.stringify(campos));
+
+      return res.json({
+         ok: true,
+         nserie,
+         registro: !!registro,
+         registronet: !!registronet,
+         cgc: campos.cgc || '',
+         email: campos.email || '',
+      });
+   }
+   //
    // CONSULTA REGISTRO
    async conregistro(req, res) {
       const { id } = req.params;
