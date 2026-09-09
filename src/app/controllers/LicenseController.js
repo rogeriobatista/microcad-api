@@ -57,6 +57,13 @@ const ML_ANUNCIOS = {
    'MLB4587279529': 'MEMORIALCAD',
 };
 
+const ML_PROGRAMAS = {
+   'MLB6549170934': 'TOPOCAD',
+   'MLB4587279529': 'MEMORIAL',
+};
+const ML_CGC_CURINGA   = '99999999999';
+const ML_EMAIL_CURINGA = 'contato@topocad2000.com.br';
+
 let mlAccessToken  = null;
 let mlTokenExpira  = 0;
 let mlRefreshToken = process.env.ML_REFRESH_TOKEN || null;
@@ -124,8 +131,8 @@ const mlGet = async (caminho) => {
    });
 };
 
-const mlAvisaVenda = async (pedido) => {
-   const itens = (pedido.order_items || []).map((it) => {
+const mlAvisaVenda = async (pedido, lic) => {
+      const itens = (pedido.order_items || []).map((it) => {
       const id    = it.item?.id || '?';
       const nome  = ML_ANUNCIOS[id] || '(anuncio nao mapeado)';
       const titulo = it.item?.title || '';
@@ -161,7 +168,7 @@ Documento: ${compradorDoc}
 Itens:
 ${itens}
 
-Responda o comprador pelo Mercado Livre.`;
+Serial: ${lic ? `${lic.nserie} ${lic.versao} (${lic.programa}) - enviado ao comprador pelo ML` : 'NAO GERADO - trate manualmente'}`;
 
    const transporter = nodemailer.createTransport(emailConfig);
    await transporter.sendMail({
@@ -229,6 +236,110 @@ MICROCAD - Computação Gráfica e Sistemas`;
 
    console.log('ML mensagem pedido', pedido.id, '>>>', JSON.stringify(r));
 };
+
+const mlGeraSerial = async (pedido) => {
+   const pedidoId = String(pedido.id);
+   const pago     = `ML-${pedidoId}`;
+
+   const jaExiste = await TBLRegistronet.findOne({ where: { pago } });
+   if (jaExiste) {
+      console.log('ML serial ja existia para o pedido', pedidoId, '>>>', jaExiste.nserie);
+      return { nserie: jaExiste.nserie, versao: jaExiste.versao, programa: jaExiste.programa, repetido: true };
+   }
+
+   const item     = (pedido.order_items || [])[0];
+   const itemId   = item && item.item && item.item.id;
+   const programa = ML_PROGRAMAS[itemId];
+
+   if (!programa) {
+      console.log('ML anuncio nao mapeado, serial nao gerado:', itemId);
+      return null;
+   }
+
+   const { nserie, lastVersion } = await getNextNserie(programa);
+
+   const cliente = (pedido.buyer && pedido.buyer.nickname ? pedido.buyer.nickname : 'CLIENTE MERCADO LIVRE').toUpperCase();
+   const data    = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+   const valor   = String(item && item.unit_price != null ? item.unit_price : (pedido.total_amount || ''));
+
+   await TBLRegistronet.create({
+      nserie,
+      nome: cliente,
+      nomereg: cliente,
+      programa,
+      tipo: 'A',
+      versao: lastVersion,
+      data,
+      pago,
+      cidade: 'X',
+      uf: 'XX',
+      cep: '00000-000',
+      cgc: ML_CGC_CURINGA,
+      email: ML_EMAIL_CURINGA,
+      valor,
+      nn: '1',
+      pp: 'BR',
+   });
+
+   await TBLRegistro.create({
+      nserie,
+      tipo: 'A',
+      versao: lastVersion,
+      cliente,
+      cidade: 'X',
+      uf: 'XX',
+      cgc: ML_CGC_CURINGA,
+      email: ML_EMAIL_CURINGA,
+      nn: '1',
+      pp: 'BR',
+   });
+
+   console.log('ML serial gerado', nserie, lastVersion, 'pedido', pedidoId);
+   return { nserie, versao: lastVersion, programa, repetido: false };
+};
+
+const mlEnviaSerial = async (pedido, lic) => {
+   const packId      = pedido.pack_id || pedido.id;
+   const vendedorId  = pedido.seller && pedido.seller.id;
+   const compradorId = pedido.buyer && pedido.buyer.id;
+
+   if (!vendedorId || !compradorId) {
+      console.log('ML serial: pedido sem vendedor ou comprador', pedido.id);
+      return;
+   }
+
+   const programName = getProgramName(lic.programa);
+   const link = `https://www.topocad2000.com.br/downloads/${programName}${lic.versao}.exe`;
+
+   const texto =
+`Ola! Obrigado pela sua compra do ${programName} ${lic.versao}.
+
+NUMERO DE SERIE: ${lic.nserie}
+TIPO: A
+
+COMO ATIVAR:
+1 - Baixe e instale:
+${link}
+2 - Abra o AutoCAD, BricsCAD, GstarCAD ou ZwCAD e clique em MICROCAD.
+3 - Clique em HABILITAR CHAVE VIRTUAL.
+4 - Informe o NUMERO DE SERIE, o TIPO, o SEU E-MAIL e o SEU CPF ou CNPJ.
+
+Duvidas: contato@topocad2000.com.br
+
+MICROCAD - Computacao Grafica e Sistemas`;
+
+   const r = await mlPostAuth(
+      `/messages/packs/${packId}/sellers/${vendedorId}?tag=post_sale`,
+      {
+         from: { user_id: String(vendedorId) },
+         to:   { user_id: String(compradorId) },
+         text: texto,
+      }
+   );
+
+   console.log('ML serial enviado pedido', pedido.id, lic.nserie, '>>>', JSON.stringify(r));
+};
+
 // =================== FIM MERCADO LIVRE - FASE 1 ===================
 
 class LicenseController {
@@ -1629,10 +1740,18 @@ class LicenseController {
          if (mlAvisados.has(chave)) return;
          mlAvisados.add(chave);
 
-         await mlAvisaVenda(pedido);
+         let lic = null;
 
-         if (pedido.status === 'paid') await mlEnviaMensagem(pedido);
+         if (pedido.status === 'paid') {
+            lic = await mlGeraSerial(pedido);
+            if (lic && !lic.repetido) {
+               await mlEnviaSerial(pedido, lic);
+            } else if (!lic) {
+               await mlEnviaMensagem(pedido);
+            }
+         }
 
+         await mlAvisaVenda(pedido, lic);
       } catch (e) {
          console.log('mlWebhook erro:', e.message);
       }
