@@ -1742,7 +1742,10 @@ class LicenseController {
 
          let lic = null;
 
-         if (pedido.status === 'paid') {
+         const criado  = new Date(pedido.date_created || 0);
+         const recente = criado >= new Date('2026-09-11T00:00:00-03:00');
+
+         if (pedido.status === 'paid' && recente) {
             lic = await mlGeraSerial(pedido);
             if (lic && !lic.repetido) {
                await mlEnviaSerial(pedido, lic);
