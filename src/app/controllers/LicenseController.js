@@ -121,14 +121,40 @@ const mlToken = async () => {
    return mlAccessToken;
 };
 
-const mlGet = async (caminho) => {
+const mlGet = async (caminho, extras) => {
    const token = await mlToken();
    return mlHttp({
       hostname: 'api.mercadolibre.com',
       path: caminho,
       method: 'GET',
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: Object.assign({ Authorization: `Bearer ${token}`, Accept: 'application/json' }, extras || {}),
    });
+};
+
+const mlFaturamento = async (pedidoId) => {
+   try {
+      const bi  = await mlGet(`/orders/${pedidoId}/billing_info`, { 'x-version': '2' });
+      const b   = (bi && bi.buyer && bi.buyer.billing_info) || {};
+      const doc = b.identification || {};
+      const end = b.address || {};
+
+      const nome = `${b.first_name || b.name || ''} ${b.last_name || ''}`.trim();
+      const cgc  = String(doc.number || '').replace(/\D/g, '');
+      const tipo = String(doc.type || '').toUpperCase() === 'CNPJ' ? 'B' : 'A';
+
+      return {
+         nome,
+         cgc,
+         tipo,
+         cidade: end.city || '',
+         uf: end.state || '',
+         cep: String(end.zip_code || '').trim(),
+         doc: `${nome} - ${doc.type || ''} ${doc.number || ''}`.trim(),
+      };
+   } catch (e) {
+      console.log('ML billing_info falhou:', e.message);
+      return null;
+   }
 };
 
 const mlAvisaVenda = async (pedido, lic) => {
@@ -141,18 +167,8 @@ const mlAvisaVenda = async (pedido, lic) => {
       return `   ${nome} | ${titulo}\n   Anuncio: ${id} | Qtd: ${qtd} | Unit: R$ ${preco}`;
    }).join('\n\n');
 
-   let compradorDoc = '(nao disponivel)';
-   try {
-      const bid = pedido.buyer?.billing_info?.id;
-      if (bid) {
-         const bi = await mlGet(`/orders/billing-info/MLB/${bid}`);
-         const b  = bi.buyer?.billing_info || {};
-         const doc = b.identification || {};
-         compradorDoc = `${b.name || ''} ${b.last_name || ''} - ${doc.type || ''} ${doc.number || ''}`.trim();
-      }
-   } catch (e) {
-      console.log('ML billing_info falhou:', e.message);
-   }
+   const fat = await mlFaturamento(pedido.id);
+   const compradorDoc = fat && fat.doc ? fat.doc : '(nao disponivel)';
 
    const texto =
 `VENDA NO MERCADO LIVRE
@@ -295,7 +311,57 @@ const mlGeraSerial = async (pedido) => {
    });
 
    console.log('ML serial gerado', nserie, lastVersion, 'pedido', pedidoId);
-   return { nserie, versao: lastVersion, programa, repetido: false };
+
+      const { nserie, lastVersion } = await getNextNserie(programa);
+
+   const fat = await mlFaturamento(pedidoId);
+
+   const apelido = pedido.buyer && pedido.buyer.nickname ? pedido.buyer.nickname : 'CLIENTE MERCADO LIVRE';
+   const cliente = (fat && fat.nome ? fat.nome : apelido).toUpperCase();
+   const cgc     = fat && (fat.cgc.length === 11 || fat.cgc.length === 14) ? fat.cgc : ML_CGC_CURINGA;
+   const tipo    = fat && fat.tipo && cgc !== ML_CGC_CURINGA ? fat.tipo : 'A';
+   const cidade  = fat && fat.cidade ? fat.cidade : 'X';
+   const uf      = fat && fat.uf ? fat.uf : 'XX';
+   const cep     = fat && fat.cep ? fat.cep : '00000-000';
+
+   const data    = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+   const valor   = String(item && item.unit_price != null ? item.unit_price : (pedido.total_amount || ''));
+
+   await TBLRegistronet.create({
+      nserie,
+      nome: cliente,
+      nomereg: cliente,
+      programa,
+      tipo,
+      versao: lastVersion,
+      data,
+      pago,
+      cidade,
+      uf,
+      cep,
+      cgc,
+      email: ML_EMAIL_CURINGA,
+      valor,
+      nn: '1',
+      pp: 'BR',
+   });
+
+   await TBLRegistro.create({
+      nserie,
+      tipo,
+      versao: lastVersion,
+      cliente,
+      cidade,
+      uf,
+      cgc,
+      email: ML_EMAIL_CURINGA,
+      nn: '1',
+      pp: 'BR',
+   });
+
+   console.log('ML serial gerado', nserie, lastVersion, tipo, cgc, 'pedido', pedidoId);
+   return { nserie, versao: lastVersion, programa, tipo, repetido: false };
+
 };
 
 const mlEnviaSerial = async (pedido, lic) => {
@@ -315,7 +381,7 @@ const mlEnviaSerial = async (pedido, lic) => {
 `Ola! Obrigado pela sua compra do ${programName} ${lic.versao}.
 
 NUMERO DE SERIE: ${lic.nserie}
-TIPO: A
+TIPO: ${lic.tipo || 'A'}
 
 COMO ATIVAR:
 1 - Baixe e instale:
