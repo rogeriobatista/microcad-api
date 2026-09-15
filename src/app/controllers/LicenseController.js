@@ -260,7 +260,7 @@ const mlGeraSerial = async (pedido) => {
    const jaExiste = await TBLRegistronet.findOne({ where: { pago } });
    if (jaExiste) {
       console.log('ML serial ja existia para o pedido', pedidoId, '>>>', jaExiste.nserie);
-      return { nserie: jaExiste.nserie, versao: jaExiste.versao, programa: jaExiste.programa, repetido: true };
+      return { nserie: jaExiste.nserie, versao: jaExiste.versao, programa: jaExiste.programa, tipo: jaExiste.tipo, repetido: true };
    }
 
    const item     = (pedido.order_items || [])[0];
@@ -273,46 +273,6 @@ const mlGeraSerial = async (pedido) => {
    }
 
    const { nserie, lastVersion } = await getNextNserie(programa);
-
-   const cliente = (pedido.buyer && pedido.buyer.nickname ? pedido.buyer.nickname : 'CLIENTE MERCADO LIVRE').toUpperCase();
-   const data    = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
-   const valor   = String(item && item.unit_price != null ? item.unit_price : (pedido.total_amount || ''));
-
-   await TBLRegistronet.create({
-      nserie,
-      nome: cliente,
-      nomereg: cliente,
-      programa,
-      tipo: 'A',
-      versao: lastVersion,
-      data,
-      pago,
-      cidade: 'X',
-      uf: 'XX',
-      cep: '00000-000',
-      cgc: ML_CGC_CURINGA,
-      email: ML_EMAIL_CURINGA,
-      valor,
-      nn: '1',
-      pp: 'BR',
-   });
-
-   await TBLRegistro.create({
-      nserie,
-      tipo: 'A',
-      versao: lastVersion,
-      cliente,
-      cidade: 'X',
-      uf: 'XX',
-      cgc: ML_CGC_CURINGA,
-      email: ML_EMAIL_CURINGA,
-      nn: '1',
-      pp: 'BR',
-   });
-
-   console.log('ML serial gerado', nserie, lastVersion, 'pedido', pedidoId);
-
-      const { nserie, lastVersion } = await getNextNserie(programa);
 
    const fat = await mlFaturamento(pedidoId);
 
@@ -361,7 +321,6 @@ const mlGeraSerial = async (pedido) => {
 
    console.log('ML serial gerado', nserie, lastVersion, tipo, cgc, 'pedido', pedidoId);
    return { nserie, versao: lastVersion, programa, tipo, repetido: false };
-
 };
 
 const mlEnviaSerial = async (pedido, lic) => {
