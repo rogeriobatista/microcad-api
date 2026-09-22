@@ -1784,6 +1784,63 @@ class LicenseController {
          console.log('mlWebhook erro:', e.message);
       }
    }
+
+   async mlDiag(req, res) {
+      if (req.params.chave !== 'microcad2026') return res.status(404).send();
+
+      const out = {
+         clientId: ML_CLIENT_ID ? 'DEFINIDO' : 'VAZIO',
+         clientSecret: ML_CLIENT_SECRET ? 'DEFINIDO' : 'VAZIO',
+         redirectUri: ML_REDIRECT_URI || 'VAZIO',
+         refreshTokenEnv: process.env.ML_REFRESH_TOKEN ? String(process.env.ML_REFRESH_TOKEN).slice(0, 10) + '...' : 'VAZIO',
+      };
+
+      try {
+         const r = await mlPost('/oauth/token', {
+            grant_type: 'refresh_token',
+            client_id: ML_CLIENT_ID,
+            client_secret: ML_CLIENT_SECRET,
+            refresh_token: mlRefreshToken,
+         });
+         out.tokenOk = !!r.access_token;
+         if (r.access_token) {
+            mlAccessToken = r.access_token;
+            mlTokenExpira = Date.now() + ((r.expires_in || 21600) - 300) * 1000;
+            if (r.refresh_token) mlRefreshToken = r.refresh_token;
+         } else {
+            out.tokenErroML = r;
+            return res.json(out);
+         }
+      } catch (e) {
+         out.tokenErro = e.message;
+         return res.json(out);
+      }
+
+      try {
+         const me = await mlGet('/users/me');
+         out.conta = { id: me.id, nickname: me.nickname, erro: me.message || me.error };
+      } catch (e) {
+         out.contaErro = e.message;
+      }
+
+      const pid = req.query.pedido;
+      if (pid) {
+         try {
+            const p = await mlGet(`/orders/${pid}`);
+            out.pedido = {
+               id: p.id,
+               status: p.status,
+               dataCriado: p.date_created,
+               anuncio: p.order_items && p.order_items[0] && p.order_items[0].item ? p.order_items[0].item.id : null,
+               erro: p.message || p.error,
+            };
+         } catch (e) {
+            out.pedidoErro = e.message;
+         }
+      }
+
+      return res.json(out);
+   }
 }
    
 const createLicenseFromAutomation = async (billingInfo, buyerEmail, orderNumber, item, program) => {
