@@ -142,13 +142,18 @@ const mlFaturamento = async (pedidoId) => {
       const cgc  = String(doc.number || '').replace(/\D/g, '');
       const tipo = String(doc.type || '').toUpperCase() === 'CNPJ' ? 'B' : 'A';
 
+      const cidade = end.city && typeof end.city === 'object' ? String(end.city.name || '') : String(end.city || '');
+      const estado = end.state && typeof end.state === 'object' ? String(end.state.id || '') : String(end.state || '');
+      const uf     = estado.indexOf('-') >= 0 ? estado.split('-').pop() : estado;
+      const cep    = end.zip_code && typeof end.zip_code === 'object' ? String(end.zip_code.id || '') : String(end.zip_code || '').trim();
+
       return {
          nome,
          cgc,
          tipo,
-         cidade: end.city || '',
-         uf: end.state || '',
-         cep: String(end.zip_code || '').trim(),
+         cidade,
+         uf,
+         cep,
          doc: `${nome} - ${doc.type || ''} ${doc.number || ''}`.trim(),
       };
    } catch (e) {

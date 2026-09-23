@@ -26,7 +26,7 @@ function ensureToken(req,res,next) {
 
 const routes = new Router();
 //
-routes.get('/', (req, res) => res.send('API MICROCAD V3.1C is running OK.'));
+routes.get('/', (req, res) => res.send('API MICROCAD V3.1D is running OK.'));
 //
 /** API App Mobile */
 routes.get('/api/search/:predicate',                   LicenseController.search);
