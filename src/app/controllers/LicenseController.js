@@ -1838,7 +1838,15 @@ class LicenseController {
             out.pedidoErro = e.message;
          }
       }
-
+      if (pid && req.query.gerar === '1') {
+         try {
+            const p = await mlGet(`/orders/${pid}`);
+            const lic = await mlGeraSerial(p);
+            out.gerar = lic;
+         } catch (e) {
+            out.gerarErro = String(e.stack || e.message).split('\n').slice(0, 3).join(' | ');
+         }
+      }
       return res.json(out);
    }
 }
