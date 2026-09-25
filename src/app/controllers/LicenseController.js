@@ -1340,9 +1340,27 @@ class LicenseController {
       return res.json({});
    }
    //
-   //NAOREG
+     //NAOREG - UMA LINHA POR SERIAL (nserie0) COM CONTADOR (ncont)
+   //SE O SERIAL JA EXISTE: SOMA 1 NO ncont E GRAVA OS DADOS DA ULTIMA OCORRENCIA
+   //SE NAO EXISTE: CRIA A LINHA COM ncont = 1
    async updnreg(req, res) {
       const { nserie0, uname, cname, ndata, nhora, ntipo } = req.body;
+      const registro = await TBLNaoreg.findOne({
+         where: {
+            nserie0: nserie0
+         }
+      });
+      if (registro) {
+         await registro.update({
+            uname: uname,
+            cname: cname,
+            ndata: ndata,
+            nhora: nhora,
+            ntipo: ntipo,
+            ncont: (registro.ncont || 0) + 1,
+         });
+         return res.json(registro);
+      }
       const addRecord = await TBLNaoreg.create({
          nserie0: nserie0,
          uname: uname,
@@ -1350,6 +1368,7 @@ class LicenseController {
          ndata: ndata,
          nhora: nhora,
          ntipo: ntipo,
+         ncont: 1,
       });
       return res.json(addRecord);
    }
