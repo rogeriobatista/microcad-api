@@ -15,6 +15,7 @@ class TBLNaoreg extends Model {
             ndata: Sequelize.STRING,
             nhora: Sequelize.STRING,
             ntipo: Sequelize.STRING,
+            ncont: Sequelize.INTEGER,
          },
          {
             sequelize,
