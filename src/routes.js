@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import LicenseController from './app/controllers/LicenseController';
+import whatsappRouter from './whatsapp';
 import jwt from "jsonwebtoken";
 import { next } from 'sucrase/dist/parser/tokenizer';
 
@@ -141,4 +142,6 @@ routes.post('/api/wix-payload', LicenseController.wixPayLoad);
 routes.get('/api/ml-callback', LicenseController.mlCallback);
 routes.post('/api/ml-webhook', LicenseController.mlWebhook);
 routes.get('/api/ml-diag/:chave', LicenseController.mlDiag);
+/** API WhatsApp - Atendente virtual */
+routes.use(whatsappRouter);
 export default routes;
