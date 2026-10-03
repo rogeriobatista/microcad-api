@@ -327,4 +327,35 @@ router.get('/api/whatsapp-conversas', (req, res) => {
    );
 });
 
+// ----------------------------------------------------------------
+// GET /privacidade - politica de privacidade do atendimento
+// (URL exigida pela Meta para publicar o app)
+// ----------------------------------------------------------------
+router.get('/privacidade', (req, res) => {
+   res.send(
+      `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">` +
+      `<meta name="viewport" content="width=device-width, initial-scale=1">` +
+      `<title>Política de Privacidade - MICROCAD</title></head>` +
+      `<body style="max-width:760px;margin:auto;padding:24px;font-family:Arial;line-height:1.5;color:#222">` +
+      `<h1>Política de Privacidade</h1>` +
+      `<h2>MICROCAD ATENDIMENTO - WhatsApp</h2>` +
+      `<p><b>Controladora:</b> MICROCAD COMPUTACAO GRAFICA LTDA, CNPJ 01.662.825/0001-34, ` +
+      `Rua da Conceição 101, Loja 19, Centro, Niterói/RJ, CEP 24020-085.</p>` +
+      `<p><b>Dados coletados:</b> ao enviar mensagem ao nosso número comercial de WhatsApp, ` +
+      `recebemos seu número de telefone, o nome do seu perfil no WhatsApp e o conteúdo das mensagens.</p>` +
+      `<p><b>Finalidade:</b> os dados são usados exclusivamente para responder ao seu contato ` +
+      `(atendimento comercial e orientações sobre os produtos MICROCAD, como o TOPOCAD2000) ` +
+      `e para encaminhamento interno de solicitações.</p>` +
+      `<p><b>Armazenamento:</b> as mensagens recentes ficam registradas temporariamente nos nossos ` +
+      `servidores apenas para a operação do atendimento. Não vendemos nem compartilhamos seus dados ` +
+      `com terceiros. O transporte das mensagens é feito pela plataforma WhatsApp (Meta), sujeita à ` +
+      `política de privacidade própria da Meta.</p>` +
+      `<p><b>Seus direitos (LGPD):</b> você pode solicitar acesso, correção ou exclusão dos seus ` +
+      `dados a qualquer momento pelo e-mail <a href="mailto:contato@topocad2000.com.br">contato@topocad2000.com.br</a>.</p>` +
+      `<p><b>Contato:</b> contato@topocad2000.com.br</p>` +
+      `<p><small>Última atualização: outubro de 2026.</small></p>` +
+      `</body></html>`
+   );
+});
+
 export default router;
