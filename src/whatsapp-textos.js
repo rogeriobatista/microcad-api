@@ -161,6 +161,12 @@ Responda apenas com o NÚMERO de uma das opções do menu (1 a 11), ou digite ME
 
 const AGRADECIMENTO = `Agradecemos por utilizar nossos serviços! Esperamos trabalhar com você novamente em breve.`;
 
+// Enviada quando a IA nao consegue responder (falha ou sem a
+// informacao) - a pergunta segue por e-mail para a equipe
+const ENCAMINHADO = `Sua pergunta foi encaminhada para nossa equipe, que retorna de segunda a sexta, das 9h às 18h.
+
+Para ver as opções, digite MENU.`;
+
 // ================================================================
 // IA (FASE 2) - usada so quando o cliente escreve texto livre que
 // nao corresponde a nenhuma opcao nem palavra-chave.
@@ -193,7 +199,8 @@ REGRAS OBRIGATÓRIAS:
 - Suporte técnico (erros, instalação, problemas de uso) é feito exclusivamente por e-mail: contato@topocad2000.com.br. Não tente resolver problemas técnicos; oriente a enviar o e-mail e a ver as videoaulas (opção 9).
 - Dúvidas sobre como usar um comando específico: indique as videoaulas (opção 9) e o suporte por e-mail.
 - Quando a resposta estiver em uma opção do menu, indique o número (ex.: "digite 6 para o link de download").
-- Se a BASE não tiver a informação, diga que não tem essa informação aqui e sugira digitar 11 para deixar a mensagem (retorno de segunda a sexta, das 9h às 18h).
+- Se a BASE não tiver a informação pedida, ou se o pedido precisar de uma pessoa (orçamento especial, desconto, revenda, parceria, nota fiscal de compra já feita, negociação), comece a resposta com a marca [ENCAMINHAR] e diga ao cliente, em uma ou duas linhas, que a pergunta foi encaminhada para nossa equipe, que retorna de segunda a sexta, das 9h às 18h. Não invente a resposta e não peça para digitar 11.
+- Só use a marca [ENCAMINHAR] nesses casos. Quando a BASE responde a pergunta, responda normalmente, sem a marca.
 - Não converse sobre assuntos que não sejam da MICROCAD e dos seus produtos.
 - Nunca peça senhas, dados de cartão ou documentos.
 - Se perguntarem se você é uma pessoa, diga que é o atendente virtual automático da Microcad.
@@ -202,5 +209,5 @@ REGRAS OBRIGATÓRIAS:
 
 export default {
    SAUDACAO, RESPOSTAS, RECEBIDO_OUTROS, PADRAO, AGRADECIMENTO,
-   IA_SOBRE, IA_REGRAS
+   ENCAMINHADO, IA_SOBRE, IA_REGRAS
 };
