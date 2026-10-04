@@ -18,6 +18,9 @@
 //   WA_MAIL_PASS        -> senha de app do Gmail (a mesma usada no
 //                          aviso de venda do ML). Sem ela o aviso
 //                          sai so no log.
+//   WA_IA_KEY           -> chave da API da Anthropic (Claude). Sem ela
+//                          a IA fica desligada e vale a resposta padrao.
+//   WA_IA_MODEL         -> (opcional) modelo; padrao claude-haiku-4-5
 // ================================================================
 
 import { Router } from 'express';
@@ -51,23 +54,46 @@ const emailConfig = {
    },
 };
 
+// IA (fase 2) - Claude da Anthropic, so para texto livre
+const WA_IA_KEY = process.env.WA_IA_KEY || '';
+const WA_IA_MODEL = process.env.WA_IA_MODEL || 'claude-haiku-4-5';
+const IA_LIMITE_DIA_NUMERO = 20; // respostas da IA por numero, por dia
+const IA_HISTORICO = 6;          // ultimas mensagens usadas como contexto
+const IA_MAX_TOKENS = 500;       // tamanho maximo da resposta
+
 // ----------------------------------------------------------------
 // Memoria de conversas e estado (zera quando o App Service reinicia)
 // ----------------------------------------------------------------
 const LIMITE_LOG = 500;
-const conversas = []; // { quando, numero, nome, direcao, texto }
+const conversas = []; // { quando, numero, nome, direcao, texto, origem }
 const estado = new Map(); // numero -> { ultima, aguardandoOutros, avisarOutros }
 const JANELA_SAUDACAO_HORAS = 24; // nova conversa depois deste tempo
+const historicoIA = new Map(); // numero -> [{ role, content }]
+const usoIA = new Map(); // numero -> { dia, qtd }
+const processadas = new Set(); // ids de mensagens ja tratadas
+const LIMITE_IDS = 1000;
 
-function registrar(numero, nome, direcao, texto) {
+function registrar(numero, nome, direcao, texto, origem) {
    conversas.push({
       quando: new Date().toISOString(),
       numero,
       nome: nome || '',
       direcao, // 'RECEBIDA' ou 'ENVIADA'
-      texto: String(texto || '').substring(0, 2000)
+      texto: String(texto || '').substring(0, 2000),
+      origem: origem || '' // 'IA' quando a resposta veio da IA
    });
    while (conversas.length > LIMITE_LOG) conversas.shift();
+}
+
+// A Meta pode reenviar a mesma mensagem; responde so uma vez
+function jaProcessada(id) {
+   if (!id) return false;
+   if (processadas.has(id)) return true;
+   processadas.add(id);
+   if (processadas.size > LIMITE_IDS) {
+      processadas.delete(processadas.values().next().value);
+   }
+   return false;
 }
 
 // ----------------------------------------------------------------
@@ -107,21 +133,21 @@ Responda pelo WhatsApp comercial.`;
 }
 
 // ----------------------------------------------------------------
-// Envio de mensagem de texto pela Cloud API (modulo https, igual
-// ao padrao usado nas rotas do Mercado Livre)
+// POST JSON generico (modulo https, igual ao padrao usado nas rotas
+// do Mercado Livre)
 // ----------------------------------------------------------------
-function waPost(caminho, objeto) {
+function postJson(hostname, caminho, cabecalhos, objeto) {
    const corpo = JSON.stringify(objeto);
    return new Promise((resolve, reject) => {
       const req = https.request({
-         hostname: 'graph.facebook.com',
+         hostname,
          path: caminho,
          method: 'POST',
-         headers: {
-            'Authorization': `Bearer ${WA_TOKEN}`,
+         timeout: 25000,
+         headers: Object.assign({
             'Content-Type': 'application/json',
             'Content-Length': Buffer.byteLength(corpo),
-         },
+         }, cabecalhos),
       }, (res) => {
          let dados = '';
          res.on('data', (d) => { dados += d; });
@@ -131,13 +157,20 @@ function waPost(caminho, objeto) {
             resolve({ status: res.statusCode, json });
          });
       });
+      req.on('timeout', () => req.destroy(new Error('timeout')));
       req.on('error', reject);
       req.write(corpo);
       req.end();
    });
 }
 
-async function enviarTexto(para, texto) {
+// Envio pela Cloud API do WhatsApp
+function waPost(caminho, objeto) {
+   return postJson('graph.facebook.com', caminho,
+      { 'Authorization': `Bearer ${WA_TOKEN}` }, objeto);
+}
+
+async function enviarTexto(para, texto, origem) {
    if (!WA_TOKEN || !WA_PHONE_NUMBER_ID) {
       console.log('[WHATSAPP] WA_TOKEN/WA_PHONE_NUMBER_ID nao configurados.');
       return false;
@@ -153,11 +186,81 @@ async function enviarTexto(para, texto) {
          console.log('[WHATSAPP] Erro no envio:', JSON.stringify(r.json));
          return false;
       }
-      registrar(para, '', 'ENVIADA', texto);
+      registrar(para, '', 'ENVIADA', texto, origem);
       return true;
    } catch (e) {
       console.log('[WHATSAPP] Excecao no envio:', e.message);
       return false;
+   }
+}
+
+// ----------------------------------------------------------------
+// IA - responde texto livre com base SOMENTE nos textos oficiais
+// (whatsapp-textos.js). Retorna null quando nao puder responder
+// (sem chave, limite do dia, erro) - ai vale a resposta padrao.
+// ----------------------------------------------------------------
+function montarSistemaIA() {
+   const opcoes = Object.keys(TEXTOS.RESPOSTAS)
+      .map((k) => `OPÇÃO ${k}:\n${TEXTOS.RESPOSTAS[k]}`)
+      .join('\n\n');
+   return `${TEXTOS.IA_REGRAS}\n\n` +
+      `===== BASE =====\n\n${TEXTOS.IA_SOBRE}\n\n` +
+      `MENU DO ATENDIMENTO:\n${TEXTOS.SAUDACAO}\n\n${opcoes}`;
+}
+const SISTEMA_IA = montarSistemaIA();
+
+async function responderIA(numero, texto) {
+   if (!WA_IA_KEY) return null;
+
+   // Limite diario por numero (protege contra abuso e custo)
+   const hoje = new Date().toISOString().substring(0, 10);
+   const uso = usoIA.get(numero) || { dia: hoje, qtd: 0 };
+   if (uso.dia !== hoje) { uso.dia = hoje; uso.qtd = 0; }
+   if (uso.qtd >= IA_LIMITE_DIA_NUMERO) {
+      console.log('[WHATSAPP][IA] Limite diario atingido:', numero);
+      return null;
+   }
+   uso.qtd += 1;
+   usoIA.set(numero, uso);
+
+   const mensagens = (historicoIA.get(numero) || [])
+      .concat([{ role: 'user', content: String(texto).substring(0, 1500) }]);
+
+   try {
+      const r = await postJson('api.anthropic.com', '/v1/messages', {
+         'x-api-key': WA_IA_KEY,
+         'anthropic-version': '2023-06-01',
+      }, {
+         model: WA_IA_MODEL,
+         max_tokens: IA_MAX_TOKENS,
+         system: [{ type: 'text', text: SISTEMA_IA, cache_control: { type: 'ephemeral' } }],
+         messages: mensagens,
+      });
+      if (r.status < 200 || r.status >= 300) {
+         console.log('[WHATSAPP][IA] Erro:', r.status, JSON.stringify(r.json).substring(0, 300));
+         return null;
+      }
+      const resposta = ((r.json && r.json.content) || [])
+         .filter((c) => c.type === 'text')
+         .map((c) => c.text)
+         .join('\n')
+         .trim();
+      if (!resposta) return null;
+
+      // Guarda historico curto (sempre comecando por 'user')
+      const novo = mensagens
+         .concat([{ role: 'assistant', content: resposta }])
+         .slice(-IA_HISTORICO);
+      while (novo.length && novo[0].role !== 'user') novo.shift();
+      historicoIA.set(numero, novo);
+
+      const u = (r.json && r.json.usage) || {};
+      console.log('[WHATSAPP][IA] OK', numero, 'tokens in/out:',
+         u.input_tokens, '/', u.output_tokens);
+      return resposta.substring(0, 3500);
+   } catch (e) {
+      console.log('[WHATSAPP][IA] Excecao:', e.message);
+      return null;
    }
 }
 
@@ -187,6 +290,9 @@ const PALAVRAS_CHAVE = [
 // Mensagem que e so um cumprimento -> manda o menu
 const SO_CUMPRIMENTO = /^(oi+|ola|opa|bom dia|boa tarde|boa noite|tudo bem\??)[\s!,.?]*$/;
 
+// Retorna { resposta, ia }. ia = true quando o texto nao casou com
+// nada: o webhook tenta a IA e, se ela nao responder, usa 'resposta'
+// (a resposta padrao).
 function decidirResposta(numero, textoOriginal) {
    const agora = new Date();
    const st = estado.get(numero) || { ultima: null, aguardandoOutros: false };
@@ -196,6 +302,10 @@ function decidirResposta(numero, textoOriginal) {
       : Infinity;
 
    let resposta;
+   let ia = false;
+
+   // Conversa nova: esquece o contexto antigo da IA
+   if (horasDesdeUltima >= JANELA_SAUDACAO_HORAS) historicoIA.delete(numero);
 
    if (/^(?:[1-9]|1[01])$/.test(txt)) {
       // Opcao do menu (1 a 11)
@@ -218,14 +328,19 @@ function decidirResposta(numero, textoOriginal) {
    } else if (SO_CUMPRIMENTO.test(txt)) {
       resposta = TEXTOS.SAUDACAO;
    } else {
-      // Tenta palavras-chave antes da resposta padrao
+      // Tenta palavras-chave; se nada casar, a IA tenta responder
       const chave = PALAVRAS_CHAVE.find((p) => p.re.test(txt));
-      resposta = chave ? TEXTOS.RESPOSTAS[chave.opcao] : TEXTOS.PADRAO;
+      if (chave) {
+         resposta = TEXTOS.RESPOSTAS[chave.opcao];
+      } else {
+         resposta = TEXTOS.PADRAO;
+         ia = true;
+      }
    }
 
    st.ultima = agora;
    estado.set(numero, st);
-   return resposta;
+   return { resposta, ia };
 }
 
 // ----------------------------------------------------------------
@@ -267,6 +382,7 @@ router.post('/api/whatsapp-webhook', async (req, res) => {
             // Mensagens recebidas
             const contatos = valor.contacts || [];
             for (const msg of (valor.messages || [])) {
+               if (jaProcessada(msg.id)) continue;
                const numero = msg.from;
                const nome =
                   (contatos[0] && contatos[0].profile && contatos[0].profile.name) || '';
@@ -288,6 +404,7 @@ router.post('/api/whatsapp-webhook', async (req, res) => {
                   textoRecebido || `[${msg.type}]`);
 
                let resposta;
+               let origem = '';
                if (!textoRecebido) {
                   // Conteudo nao-texto: reforca o canal correto
                   resposta = TEXTOS.PADRAO;
@@ -295,10 +412,18 @@ router.post('/api/whatsapp-webhook', async (req, res) => {
                   st.ultima = new Date();
                   estado.set(numero, st);
                } else {
-                  resposta = decidirResposta(numero, textoRecebido);
+                  const decisao = decidirResposta(numero, textoRecebido);
+                  resposta = decisao.resposta;
+                  if (decisao.ia) {
+                     const respostaIA = await responderIA(numero, textoRecebido);
+                     if (respostaIA) {
+                        resposta = respostaIA;
+                        origem = 'IA';
+                     }
+                  }
                }
 
-               await enviarTexto(numero, resposta);
+               await enviarTexto(numero, resposta, origem);
 
                // Aviso da opcao 11 (depois de confirmar ao cliente)
                const st = estado.get(numero);
@@ -322,10 +447,12 @@ router.get('/api/whatsapp-conversas', (req, res) => {
    if (req.query.chave !== PAINEL_CHAVE) return res.sendStatus(403);
 
    const linhas = conversas.slice().reverse().map(c => {
-      const cor = c.direcao === 'RECEBIDA' ? '#e8f5e9' : '#e3f2fd';
+      const ehIA = c.origem === 'IA';
+      const cor = c.direcao === 'RECEBIDA'
+         ? '#e8f5e9' : (ehIA ? '#fff3e0' : '#e3f2fd');
       const quando = c.quando.replace('T', ' ').substring(0, 19);
       const quem = c.direcao === 'RECEBIDA'
-         ? `${c.numero} ${c.nome}` : 'ATENDENTE';
+         ? `${c.numero} ${c.nome}` : (ehIA ? 'ATENDENTE (IA)' : 'ATENDENTE');
       const texto = String(c.texto)
          .replace(/&/g, '&amp;').replace(/</g, '&lt;')
          .replace(/\n/g, '<br>');
