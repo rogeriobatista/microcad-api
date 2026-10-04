@@ -56,7 +56,7 @@ const emailConfig = {
 // ----------------------------------------------------------------
 const LIMITE_LOG = 500;
 const conversas = []; // { quando, numero, nome, direcao, texto }
-const estado = new Map(); // numero -> { ultima, aguardando9, avisar9 }
+const estado = new Map(); // numero -> { ultima, aguardandoOutros, avisarOutros }
 const JANELA_SAUDACAO_HORAS = 24; // nova conversa depois deste tempo
 
 function registrar(numero, nome, direcao, texto) {
@@ -71,17 +71,18 @@ function registrar(numero, nome, direcao, texto) {
 }
 
 // ----------------------------------------------------------------
-// AVISO PARA FELIX (opcao 9) - por e-mail, igual ao aviso do ML
+// AVISO PARA FELIX (opcao 11 - OUTROS ASSUNTOS) - por e-mail,
+// igual ao aviso do ML
 // ----------------------------------------------------------------
 async function avisarFelix(numero, nome, texto) {
    try {
       if (!WA_MAIL_PASS) {
-         console.log('[WHATSAPP][OPCAO 9] WA_MAIL_PASS nao configurada.',
+         console.log('[WHATSAPP][OUTROS] WA_MAIL_PASS nao configurada.',
             'Aviso so no log:', numero, nome, '-', texto);
          return;
       }
       const corpo =
-`SOLICITACAO PELO WHATSAPP (OPCAO 9 - OUTROS)
+`SOLICITACAO PELO WHATSAPP (OPCAO 11 - OUTROS ASSUNTOS)
 
 Numero: ${numero}
 Nome:   ${nome || '(sem nome)'}
@@ -96,10 +97,10 @@ Responda pelo WhatsApp comercial.`;
       await transporter.sendMail({
          from: `"MICROCAD-Computação Grafica e Sistemas" <${WA_MAIL_USER}>`,
          to: WA_AVISO_EMAIL,
-         subject: `WHATSAPP OPCAO 9 - ${numero}${nome ? ' - ' + nome : ''}`,
+         subject: `WHATSAPP OUTROS ASSUNTOS - ${numero}${nome ? ' - ' + nome : ''}`,
          text: corpo,
       });
-      console.log('[WHATSAPP][OPCAO 9] Aviso enviado para', WA_AVISO_EMAIL);
+      console.log('[WHATSAPP][OUTROS] Aviso enviado para', WA_AVISO_EMAIL);
    } catch (e) {
       console.log('[WHATSAPP] Falha no aviso por e-mail:', e.message);
    }
@@ -171,9 +172,24 @@ function normalizar(txt) {
       .replace(/[̀-ͯ]/g, ''); // remove acentos
 }
 
+// Palavras-chave (sem IA): texto livre que leva direto a uma opcao
+// do menu. Avaliadas em ordem - a primeira que casar vence.
+const PALAVRAS_CHAVE = [
+   { re: /\b(atualizar|atualizacao|atualizacoes)\b/, opcao: '5' },
+   { re: /\b(video|videos|videoaula|videoaulas|aula|aulas|curso|cursos|treinamento|treinamentos)\b/, opcao: '9' },
+   { re: /\b(compativel|compatibilidade|autocad|bricscad|gstarcad|zwcad)\b/, opcao: '7' },
+   { re: /\b(testar|teste|demonstracao|demo|baixar|download|instalar)\b/, opcao: '6' },
+   { re: /\b(preco|precos|valor|valores|comprar|compra|custa|custo)\b/, opcao: '1' },
+   { re: /\b(erro|erros|problema|problemas|suporte|travando|travou)\b/, opcao: '2' },
+   { re: /\b(telefone|contato|contatos|falar|atendente|humano|ligar)\b/, opcao: '10' },
+];
+
+// Mensagem que e so um cumprimento -> manda o menu
+const SO_CUMPRIMENTO = /^(oi+|ola|opa|bom dia|boa tarde|boa noite|tudo bem\??)[\s!,.?]*$/;
+
 function decidirResposta(numero, textoOriginal) {
    const agora = new Date();
-   const st = estado.get(numero) || { ultima: null, aguardando9: false };
+   const st = estado.get(numero) || { ultima: null, aguardandoOutros: false };
    const txt = normalizar(textoOriginal);
    const horasDesdeUltima = st.ultima
       ? (agora - st.ultima) / 36e5
@@ -181,26 +197,30 @@ function decidirResposta(numero, textoOriginal) {
 
    let resposta;
 
-   if (/^[1-9]$/.test(txt)) {
-      // Opcao do menu
+   if (/^(?:[1-9]|1[01])$/.test(txt)) {
+      // Opcao do menu (1 a 11)
       resposta = TEXTOS.RESPOSTAS[txt];
-      st.aguardando9 = (txt === '9');
+      st.aguardandoOutros = (txt === '11');
    } else if (txt === 'menu' || txt === '/menu' || txt === '0') {
       resposta = TEXTOS.SAUDACAO;
-      st.aguardando9 = false;
+      st.aguardandoOutros = false;
    } else if (/\b(obrigad|valeu|grat[oa]|agradec)/.test(txt)) {
       resposta = TEXTOS.AGRADECIMENTO;
-      st.aguardando9 = false;
-   } else if (st.aguardando9) {
-      // Cliente descreveu a solicitacao da opcao 9
-      resposta = TEXTOS.RECEBIDO9;
-      st.aguardando9 = false;
-      st.avisar9 = true; // sinaliza para disparar o aviso
+      st.aguardandoOutros = false;
+   } else if (st.aguardandoOutros) {
+      // Cliente descreveu a solicitacao da opcao 11
+      resposta = TEXTOS.RECEBIDO_OUTROS;
+      st.aguardandoOutros = false;
+      st.avisarOutros = true; // sinaliza para disparar o aviso
    } else if (horasDesdeUltima >= JANELA_SAUDACAO_HORAS) {
       // Primeira mensagem (ou conversa antiga): manda o menu
       resposta = TEXTOS.SAUDACAO;
+   } else if (SO_CUMPRIMENTO.test(txt)) {
+      resposta = TEXTOS.SAUDACAO;
    } else {
-      resposta = TEXTOS.PADRAO;
+      // Tenta palavras-chave antes da resposta padrao
+      const chave = PALAVRAS_CHAVE.find((p) => p.re.test(txt));
+      resposta = chave ? TEXTOS.RESPOSTAS[chave.opcao] : TEXTOS.PADRAO;
    }
 
    st.ultima = agora;
@@ -280,10 +300,10 @@ router.post('/api/whatsapp-webhook', async (req, res) => {
 
                await enviarTexto(numero, resposta);
 
-               // Aviso da opcao 9 (depois de confirmar ao cliente)
+               // Aviso da opcao 11 (depois de confirmar ao cliente)
                const st = estado.get(numero);
-               if (st && st.avisar9) {
-                  st.avisar9 = false;
+               if (st && st.avisarOutros) {
+                  st.avisarOutros = false;
                   estado.set(numero, st);
                   await avisarFelix(numero, nome, textoRecebido);
                }
