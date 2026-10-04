@@ -17,11 +17,13 @@ Responda com o NÚMERO da opção:
 6 - TESTAR POR 30 DIAS
 7 - COMPATIBILIDADE
 8 - LISTA DE ATUALIZAÇÕES
-9 - OUTROS
+9 - VIDEOAULAS E CURSOS
+10 - OUTROS CONTATOS
+11 - OUTROS ASSUNTOS (deixar mensagem)
 
 Atendimento 24h por este canal.
 Para voltar a este menu, digite MENU.
-Evite áudios e chamadas.`;
+Não envie áudios nem chamadas: não são reconhecidos neste canal.`;
 
 const RESPOSTAS = {
    "1": `TOPOCAD2000 V21
@@ -124,18 +126,39 @@ ZWCADs: 2020 ao 2027 (Professional) / Standard: Não compatível`,
 
 https://www.topocad2000.com.br/downloads/TOPOCAD2000.TXT`,
 
-   "9": `Certo. Descreva sua solicitação em uma mensagem que retornaremos no horário de atendimento: segunda a sexta, das 9h às 18h.`
+   "9": `VIDEOAULAS E CURSOS
+
+A maioria das dúvidas está respondida nas videoaulas:
+
+- No site www.topocad2000.com.br > VIDEO AULAS
+- Dentro do programa, cada comando tem um botão VÍDEO com as aulas daquele comando
+
+No site você também encontra CURSOS / TREINAMENTOS.
+
+Para voltar ao menu, digite MENU.`,
+
+   "10": `OUTROS CONTATOS
+
+SUPORTE (24h, todos os dias, só por e-mail):
+contato@topocad2000.com.br
+
+COMERCIAL (horário comercial, segunda a sexta, das 9h às 18h):
+(21) 2717-4559
+
+Para voltar ao menu, digite MENU.`,
+
+   "11": `Certo. Descreva sua solicitação em uma mensagem que retornaremos no horário de atendimento: segunda a sexta, das 9h às 18h.`
 };
 
-// Confirmacao enviada quando o cliente descreve a solicitacao da opcao 9
-const RECEBIDO9 = `Recebido! Sua mensagem foi encaminhada e retornaremos no horário de atendimento: segunda a sexta, das 9h às 18h.
+// Confirmacao enviada quando o cliente descreve a solicitacao da opcao 11
+const RECEBIDO_OUTROS = `Recebido! Sua mensagem foi encaminhada e retornaremos no horário de atendimento: segunda a sexta, das 9h às 18h.
 
 Para outras opções, digite MENU.`;
 
 const PADRAO = `Não identifiquei sua opção.
 
-Responda apenas com o NÚMERO de uma das opções do menu (1 a 9), ou digite MENU para ver as opções novamente.`;
+Responda apenas com o NÚMERO de uma das opções do menu (1 a 11), ou digite MENU para ver as opções novamente.`;
 
 const AGRADECIMENTO = `Agradecemos por utilizar nossos serviços! Esperamos trabalhar com você novamente em breve.`;
 
-export default { SAUDACAO, RESPOSTAS, RECEBIDO9, PADRAO, AGRADECIMENTO };
+export default { SAUDACAO, RESPOSTAS, RECEBIDO_OUTROS, PADRAO, AGRADECIMENTO };
