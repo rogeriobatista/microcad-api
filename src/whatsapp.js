@@ -60,6 +60,11 @@ const WA_IA_MODEL = process.env.WA_IA_MODEL || 'claude-haiku-4-5';
 const IA_LIMITE_DIA_NUMERO = 20; // respostas da IA por numero, por dia
 const IA_HISTORICO = 6;          // ultimas mensagens usadas como contexto
 const IA_MAX_TOKENS = 500;       // tamanho maximo da resposta
+const IA_MARCA = /\[ENCAMINHAR\]/gi; // a IA usa quando nao tem a informacao
+const AVISO_IA_INTERVALO_MIN = 60;   // no maximo 1 e-mail por cliente/hora
+const TEXTO_ENCAMINHADO_PADRAO =
+   'Sua pergunta foi encaminhada para nossa equipe, que retorna de segunda a sexta, das 9h às 18h.\n\n' +
+   'Para ver as opções, digite MENU.';
 
 // ----------------------------------------------------------------
 // Memoria de conversas e estado (zera quando o App Service reinicia)
@@ -72,6 +77,7 @@ const historicoIA = new Map(); // numero -> [{ role, content }]
 const usoIA = new Map(); // numero -> { dia, qtd }
 const processadas = new Set(); // ids de mensagens ja tratadas
 const LIMITE_IDS = 1000;
+const ultimoAvisoIA = new Map(); // numero -> horario do ultimo e-mail
 
 function registrar(numero, nome, direcao, texto, origem) {
    conversas.push({
@@ -97,39 +103,113 @@ function jaProcessada(id) {
 }
 
 // ----------------------------------------------------------------
-// AVISO PARA FELIX (opcao 11 - OUTROS ASSUNTOS) - por e-mail,
-// igual ao aviso do ML
+// AVISOS PARA FELIX por e-mail (mesmo esquema do aviso do ML)
 // ----------------------------------------------------------------
-async function avisarFelix(numero, nome, texto) {
+function agoraBR() {
+   return new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+}
+
+async function enviarEmail(assunto, corpo, rotulo) {
    try {
       if (!WA_MAIL_PASS) {
-         console.log('[WHATSAPP][OUTROS] WA_MAIL_PASS nao configurada.',
-            'Aviso so no log:', numero, nome, '-', texto);
+         console.log(`[WHATSAPP][${rotulo}] WA_MAIL_PASS nao configurada.`,
+            'Aviso so no log:', assunto);
          return;
       }
-      const corpo =
+      const transporter = nodemailer.createTransport(emailConfig);
+      await transporter.sendMail({
+         from: `"MICROCAD-Computação Grafica e Sistemas" <${WA_MAIL_USER}>`,
+         to: WA_AVISO_EMAIL,
+         subject: assunto,
+         text: corpo,
+      });
+      console.log(`[WHATSAPP][${rotulo}] Aviso enviado para`, WA_AVISO_EMAIL);
+   } catch (e) {
+      console.log('[WHATSAPP] Falha no aviso por e-mail:', e.message);
+   }
+}
+
+// Opcao 11 - cliente deixou mensagem
+async function avisarFelix(numero, nome, texto) {
+   const corpo =
 `SOLICITACAO PELO WHATSAPP (OPCAO 11 - OUTROS ASSUNTOS)
 
 Numero: ${numero}
 Nome:   ${nome || '(sem nome)'}
-Data:   ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
+Data:   ${agoraBR()}
+Abrir conversa: https://wa.me/${numero}
 
 Mensagem do cliente:
 ${texto}
 
 Responda pelo WhatsApp comercial.`;
+   await enviarEmail(
+      `WHATSAPP OUTROS ASSUNTOS - ${numero}${nome ? ' - ' + nome : ''}`,
+      corpo, 'OUTROS');
+}
 
-      const transporter = nodemailer.createTransport(emailConfig);
-      await transporter.sendMail({
-         from: `"MICROCAD-Computação Grafica e Sistemas" <${WA_MAIL_USER}>`,
-         to: WA_AVISO_EMAIL,
-         subject: `WHATSAPP OUTROS ASSUNTOS - ${numero}${nome ? ' - ' + nome : ''}`,
-         text: corpo,
-      });
-      console.log('[WHATSAPP][OUTROS] Aviso enviado para', WA_AVISO_EMAIL);
-   } catch (e) {
-      console.log('[WHATSAPP] Falha no aviso por e-mail:', e.message);
+// Resume textos fixos (menu e opcoes) para o e-mail ficar curto
+function resumirTexto(texto) {
+   const t = String(texto || '');
+   if (t === TEXTOS.SAUDACAO) return '(menu de opções)';
+   const opcao = Object.keys(TEXTOS.RESPOSTAS)
+      .find((k) => t.startsWith(TEXTOS.RESPOSTAS[k]));
+   if (opcao) return `(resposta da opção ${opcao})`;
+   return t.length > 600 ? t.substring(0, 600) + '...' : t;
+}
+
+// Ultimas mensagens da conversa com um numero (para o e-mail)
+function historicoTexto(numero, qtd) {
+   return conversas
+      .filter((c) => c.numero === numero)
+      .slice(-qtd)
+      .map((c) => {
+         const hora = new Date(c.quando).toLocaleTimeString('pt-BR',
+            { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });
+         const quem = c.direcao === 'RECEBIDA'
+            ? 'CLIENTE' : (c.origem === 'IA' ? 'ATENDENTE (IA)' : 'ATENDENTE');
+         return `[${hora}] ${quem}: ${c.direcao === 'RECEBIDA' ? c.texto : resumirTexto(c.texto)}`;
+      })
+      .join('\n\n');
+}
+
+// IA nao resolveu (sem a informacao na base, ou falhou)
+async function avisarIANaoResolveu(numero, nome, pergunta, motivo) {
+   // No maximo 1 e-mail por cliente a cada AVISO_IA_INTERVALO_MIN
+   const agora = Date.now();
+   const ultimo = ultimoAvisoIA.get(numero) || 0;
+   if (agora - ultimo < AVISO_IA_INTERVALO_MIN * 60000) {
+      console.log('[WHATSAPP][IA-AVISO] Ja avisado na ultima hora:', numero);
+      return;
    }
+   ultimoAvisoIA.set(numero, agora);
+   if (ultimoAvisoIA.size > 500) { // limpa avisos antigos
+      for (const [n, t] of ultimoAvisoIA) {
+         if (agora - t >= AVISO_IA_INTERVALO_MIN * 60000) ultimoAvisoIA.delete(n);
+      }
+   }
+
+   const corpo =
+`A IA NAO RESOLVEU UMA PERGUNTA NO WHATSAPP
+
+Motivo: ${motivo}
+
+Numero: ${numero}
+Nome:   ${nome || '(sem nome)'}
+Data:   ${agoraBR()}
+Abrir conversa: https://wa.me/${numero}
+
+Pergunta do cliente:
+${pergunta}
+
+Ultimas mensagens da conversa:
+
+${historicoTexto(numero, 10)}
+
+O cliente foi informado de que a equipe retorna de segunda a sexta, das 9h as 18h.`;
+   await enviarEmail(
+      `WHATSAPP - IA NAO RESOLVEU - ${numero}${nome ? ' - ' + nome : ''}`,
+      corpo, 'IA-AVISO');
 }
 
 // ----------------------------------------------------------------
@@ -196,9 +276,17 @@ async function enviarTexto(para, texto, origem) {
 
 // ----------------------------------------------------------------
 // IA - responde texto livre com base SOMENTE nos textos oficiais
-// (whatsapp-textos.js). Retorna null quando nao puder responder
-// (sem chave, limite do dia, erro) - ai vale a resposta padrao.
+// (whatsapp-textos.js). Retorna { status, resposta }:
+//   ok         - IA respondeu
+//   encaminhar - IA nao tinha a informacao (marca [ENCAMINHAR])
+//   erro       - falha na chamada da IA
+//   desligada  - sem chave configurada
+//   limite     - limite diario do numero atingido
 // ----------------------------------------------------------------
+function textoEncaminhado() {
+   return TEXTOS.ENCAMINHADO || TEXTO_ENCAMINHADO_PADRAO;
+}
+
 function montarSistemaIA() {
    const opcoes = Object.keys(TEXTOS.RESPOSTAS)
       .map((k) => `OPÇÃO ${k}:\n${TEXTOS.RESPOSTAS[k]}`)
@@ -210,7 +298,7 @@ function montarSistemaIA() {
 const SISTEMA_IA = montarSistemaIA();
 
 async function responderIA(numero, texto) {
-   if (!WA_IA_KEY) return null;
+   if (!WA_IA_KEY) return { status: 'desligada', resposta: null };
 
    // Limite diario por numero (protege contra abuso e custo)
    const hoje = new Date().toISOString().substring(0, 10);
@@ -218,7 +306,7 @@ async function responderIA(numero, texto) {
    if (uso.dia !== hoje) { uso.dia = hoje; uso.qtd = 0; }
    if (uso.qtd >= IA_LIMITE_DIA_NUMERO) {
       console.log('[WHATSAPP][IA] Limite diario atingido:', numero);
-      return null;
+      return { status: 'limite', resposta: null };
    }
    uso.qtd += 1;
    usoIA.set(numero, uso);
@@ -238,14 +326,19 @@ async function responderIA(numero, texto) {
       });
       if (r.status < 200 || r.status >= 300) {
          console.log('[WHATSAPP][IA] Erro:', r.status, JSON.stringify(r.json).substring(0, 300));
-         return null;
+         return { status: 'erro', resposta: null };
       }
-      const resposta = ((r.json && r.json.content) || [])
+      const bruta = ((r.json && r.json.content) || [])
          .filter((c) => c.type === 'text')
          .map((c) => c.text)
          .join('\n')
          .trim();
-      if (!resposta) return null;
+      if (!bruta) return { status: 'erro', resposta: null };
+
+      // A IA marca [ENCAMINHAR] quando a base nao tem a informacao
+      const encaminhar = /\[ENCAMINHAR\]/i.test(bruta);
+      let resposta = bruta.replace(IA_MARCA, '').trim();
+      if (encaminhar && !resposta) resposta = textoEncaminhado();
 
       // Guarda historico curto (sempre comecando por 'user')
       const novo = mensagens
@@ -255,12 +348,15 @@ async function responderIA(numero, texto) {
       historicoIA.set(numero, novo);
 
       const u = (r.json && r.json.usage) || {};
-      console.log('[WHATSAPP][IA] OK', numero, 'tokens in/out:',
-         u.input_tokens, '/', u.output_tokens);
-      return resposta.substring(0, 3500);
+      console.log('[WHATSAPP][IA]', encaminhar ? 'ENCAMINHAR' : 'OK', numero,
+         'tokens in/out:', u.input_tokens, '/', u.output_tokens);
+      return {
+         status: encaminhar ? 'encaminhar' : 'ok',
+         resposta: resposta.substring(0, 3500),
+      };
    } catch (e) {
       console.log('[WHATSAPP][IA] Excecao:', e.message);
-      return null;
+      return { status: 'erro', resposta: null };
    }
 }
 
@@ -418,6 +514,7 @@ router.post('/api/whatsapp-webhook', async (req, res) => {
 
                let resposta;
                let origem = '';
+               let motivoAviso = ''; // preenchido quando a IA nao resolveu
                if (!textoRecebido) {
                   // Conteudo nao-texto: reforca o canal correto
                   resposta = TEXTOS.PADRAO;
@@ -428,15 +525,28 @@ router.post('/api/whatsapp-webhook', async (req, res) => {
                   const decisao = decidirResposta(numero, textoRecebido);
                   resposta = decisao.resposta;
                   if (decisao.ia) {
-                     const respostaIA = await responderIA(numero, textoRecebido);
-                     if (respostaIA) {
-                        resposta = respostaIA;
+                     const ia = await responderIA(numero, textoRecebido);
+                     if (ia.status === 'ok') {
+                        resposta = ia.resposta;
                         origem = 'IA';
+                     } else if (ia.status === 'encaminhar') {
+                        resposta = ia.resposta;
+                        origem = 'IA';
+                        motivoAviso = 'a base de informacoes nao tem a resposta';
+                     } else if (ia.status === 'erro') {
+                        resposta = textoEncaminhado();
+                        motivoAviso = 'falha na IA (erro ou fora do ar)';
                      }
+                     // desligada / limite: fica a resposta padrao (menu)
                   }
                }
 
                await enviarTexto(numero, resposta, origem);
+
+               // IA nao resolveu: avisa Felix por e-mail (max 1/hora/cliente)
+               if (motivoAviso) {
+                  await avisarIANaoResolveu(numero, nome, textoRecebido, motivoAviso);
+               }
 
                // Aviso da opcao 11 (depois de confirmar ao cliente)
                const st = estado.get(numero);
