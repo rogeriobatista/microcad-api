@@ -287,8 +287,14 @@ const PALAVRAS_CHAVE = [
    { re: /\b(telefone|contato|contatos|falar|atendente|humano|ligar)\b/, opcao: '10' },
 ];
 
-// Mensagem que e so um cumprimento -> manda o menu
-const SO_CUMPRIMENTO = /^(oi+|ola|opa|bom dia|boa tarde|boa noite|tudo bem\??)[\s!,.?]*$/;
+// Mensagem que e so cumprimento (um ou varios) -> manda o menu
+const SO_CUMPRIMENTO = /^((oi+|ola|opa|alo|e ai|eai|bom dia|boa tarde|boa noite|tudo bem|td bem|tudo bom)[\s!,.?]*)+$/;
+
+// Dica acrescentada quando a 1a mensagem ja recebe uma resposta direta
+const DICA_MENU = 'Para ver todas as opções, digite MENU.';
+function comDicaMenu(texto) {
+   return /digite MENU/i.test(texto) ? texto : `${texto}\n\n${DICA_MENU}`;
+}
 
 // Retorna { resposta, ia }. ia = true quando o texto nao casou com
 // nada: o webhook tenta a IA e, se ela nao responder, usa 'resposta'
@@ -304,8 +310,13 @@ function decidirResposta(numero, textoOriginal) {
    let resposta;
    let ia = false;
 
-   // Conversa nova: esquece o contexto antigo da IA
-   if (horasDesdeUltima >= JANELA_SAUDACAO_HORAS) historicoIA.delete(numero);
+   // Conversa nova (1a mensagem ou mais de 24h sem conversa):
+   // esquece o contexto antigo da IA e a espera da opcao 11
+   const conversaNova = horasDesdeUltima >= JANELA_SAUDACAO_HORAS;
+   if (conversaNova) {
+      historicoIA.delete(numero);
+      st.aguardandoOutros = false;
+   }
 
    if (/^(?:[1-9]|1[01])$/.test(txt)) {
       // Opcao do menu (1 a 11)
@@ -322,18 +333,20 @@ function decidirResposta(numero, textoOriginal) {
       resposta = TEXTOS.RECEBIDO_OUTROS;
       st.aguardandoOutros = false;
       st.avisarOutros = true; // sinaliza para disparar o aviso
-   } else if (horasDesdeUltima >= JANELA_SAUDACAO_HORAS) {
-      // Primeira mensagem (ou conversa antiga): manda o menu
-      resposta = TEXTOS.SAUDACAO;
    } else if (SO_CUMPRIMENTO.test(txt)) {
+      // So cumprimento: manda o menu
       resposta = TEXTOS.SAUDACAO;
    } else {
-      // Tenta palavras-chave; se nada casar, a IA tenta responder
+      // Pergunta: tenta palavras-chave; se nada casar, a IA tenta
+      // responder. Na conversa nova, a resposta direta leva a dica do
+      // MENU e, se a IA nao responder, vai o menu (nao o "nao
+      // identifiquei").
       const chave = PALAVRAS_CHAVE.find((p) => p.re.test(txt));
       if (chave) {
          resposta = TEXTOS.RESPOSTAS[chave.opcao];
+         if (conversaNova) resposta = comDicaMenu(resposta);
       } else {
-         resposta = TEXTOS.PADRAO;
+         resposta = conversaNova ? TEXTOS.SAUDACAO : TEXTOS.PADRAO;
          ia = true;
       }
    }
