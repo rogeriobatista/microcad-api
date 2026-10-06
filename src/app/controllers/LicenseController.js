@@ -727,6 +727,7 @@ class LicenseController {
             { nserie: 'REGV01', uname: 'ADRIANO', cname: 'DESKTOOP', rev: 'PA' },
             { nserie: 'REGV01', uname: 'ADMINISTRATIVO3', cname: 'DESKTOP-45RCPST', rev: 'TC' },
             { nserie: 'REGV01', uname: 'ADMINISTRATIVO6', cname: 'DESKTOP-4846ANM', rev: 'TC' },
+            { nserie: 'REGV01', uname: 'ADMINISTRATIVO3', cname: 'ADMCAD', rev: 'TC' },
             { nserie: 'REGV01', uname: 'ROGERIO BATISTA', cname: 'DESKTOP-J5RQF1S', rev: 'MC' }
          ]
       const licence = licences.find(x =>
