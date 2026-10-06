@@ -699,25 +699,42 @@ class LicenseController {
 
    //
    //MICROCAD
+   // COMPUTADORES LIBERADOS DO REGISTROREV (CHAMADO PELO Licenca.vb DO REGISTROREV)
+   // GET /apimicrocad?nserie=REGV01&uname=USUARIO&cname=COMPUTADOR
+   // RESPOSTA: { valid: true, rev: 'TC', email: 'compras@totalcad.com.br' }  OU  { valid: false }
+   // rev = REVENDA (MC = MICROCAD / TC = TOTALCAD / PA = PORTAL AGRIMENSURA) - O EMAIL DA REVENDA VEM DE revendas
+   // PARA LIBERAR UM COMPUTADOR NOVO: ACRESCENTAR UMA LINHA EM licences COM O USUARIO E O COMPUTADOR
+   // QUE APARECEM NA TELA "LICENCA INVALIDA" DO REGISTROREV (NAO PRECISA GERAR EXE NOVO)
    async microcad(req, res) {
-      const { nserie, uname, cname } = req.query
+      const nserie = String(req.query.nserie || '').trim().toUpperCase()
+      const uname = String(req.query.uname || '').trim().toUpperCase()
+      const cname = String(req.query.cname || '').trim().toUpperCase()
       console.log(nserie, uname, cname)
+      const revendas = {
+         MC: 'contato@topocad2000.com.br',
+         TC: 'compras@totalcad.com.br',
+         PA: 'contato@portalagrimensura.com'
+      }
       const licences =
          [
-//          { nserie: 'REGV01', uname: 'FELIX', cname: 'FELIX-PC' },
-//          { nserie: 'REGV01', uname: 'FELIX', cname: 'FELIX-PC2' },
-            { nserie: 'REGV01', uname: 'FELIX', cname: 'FELIX-PC3' },
-            { nserie: 'REGV01', uname: 'FELIX', cname: 'FELIX-PC4' },
-            { nserie: 'REGV01', uname: 'FELIX', cname: 'FELIX-PC5' },
-            { nserie: 'REGV01', uname: 'CACOB', cname: 'NB-DELL-RICARDO' },
-            { nserie: 'REGV01', uname: 'RICARDO MELO', cname: 'RICARDO-PC' },
-            { nserie: 'REGV01', uname: 'ADRIANO', cname: 'DESKTOOP' },
-            { nserie: 'REGV01', uname: 'ADMINISTRATIVO3', cname: 'DESKTOP-45RCPST' },
-            { nserie: 'REGV01', uname: 'ADMINISTRATIVO6', cname: 'DESKTOP-4846ANM' },
-            { nserie: 'REGV01', uname: 'ROGERIO BATISTA', cname: 'DESKTOP-J5RQF1S' }
+//          { nserie: 'REGV01', uname: 'FELIX', cname: 'FELIX-PC', rev: 'MC' },
+//          { nserie: 'REGV01', uname: 'FELIX', cname: 'FELIX-PC2', rev: 'MC' },
+            { nserie: 'REGV01', uname: 'FELIX', cname: 'FELIX-PC3', rev: 'MC' },
+            { nserie: 'REGV01', uname: 'FELIX', cname: 'FELIX-PC4', rev: 'MC' },
+            { nserie: 'REGV01', uname: 'FELIX', cname: 'FELIX-PC5', rev: 'MC' },
+            { nserie: 'REGV01', uname: 'CACOB', cname: 'NB-DELL-RICARDO', rev: 'MC' },
+            { nserie: 'REGV01', uname: 'RICARDO MELO', cname: 'RICARDO-PC', rev: 'MC' },
+            { nserie: 'REGV01', uname: 'ADRIANO', cname: 'DESKTOOP', rev: 'PA' },
+            { nserie: 'REGV01', uname: 'ADMINISTRATIVO3', cname: 'DESKTOP-45RCPST', rev: 'TC' },
+            { nserie: 'REGV01', uname: 'ADMINISTRATIVO6', cname: 'DESKTOP-4846ANM', rev: 'TC' },
+            { nserie: 'REGV01', uname: 'ROGERIO BATISTA', cname: 'DESKTOP-J5RQF1S', rev: 'MC' }
          ]
-      const valid = licences.some(x => x.nserie == nserie && x.uname == uname && x.cname == cname)
-      return res.json({ valid: valid })
+      const licence = licences.find(x =>
+         x.nserie.toUpperCase() == nserie &&
+         x.uname.toUpperCase() == uname &&
+         x.cname.toUpperCase() == cname)
+      if (!licence) return res.json({ valid: false })
+      return res.json({ valid: true, rev: licence.rev, email: revendas[licence.rev] || '' })
    }
    //
    //MICROCADUSU
