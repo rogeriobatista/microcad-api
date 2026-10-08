@@ -700,20 +700,28 @@ class LicenseController {
    //
    //MICROCAD
    // COMPUTADORES LIBERADOS DO REGISTROREV (CHAMADO PELO Licenca.vb DO REGISTROREV)
-   // GET /apimicrocad?nserie=REGV01&uname=USUARIO&cname=COMPUTADOR
-   // RESPOSTA: { valid: true, rev: 'TC', email: 'compras@totalcad.com.br' }  OU  { valid: false }
+   // GET /apimicrocad?nserie=REGV01&uname=USUARIO&cname=COMPUTADOR&ver=2
+   // RESPOSTA: { valid: true, rev: 'TC', email: 'compras@totalcad.com.br' }
+   //           { valid: false }                   -> COMPUTADOR NAO LIBERADO
+   //           { valid: false, atualizar: true }  -> EXE DESATUALIZADO (ver MENOR QUE A MINIMA DA REVENDA)
    // rev = REVENDA (MC = MICROCAD / TC = TOTALCAD / PA = PORTAL AGRIMENSURA) - O EMAIL DA REVENDA VEM DE revendas
+   // versaoMinima = VERSAO MINIMA DO REGISTROREV POR REVENDA (EXE ANTIGO NAO MANDA ver = VERSAO 0)
+   //   PA: ACRESCENTAR  PA: 2  DEPOIS DE ENVIAR O EXE NOVO PARA A PORTAL AGRIMENSURA
    // PARA LIBERAR UM COMPUTADOR NOVO: ACRESCENTAR UMA LINHA EM licences COM O USUARIO E O COMPUTADOR
    // QUE APARECEM NA TELA "LICENCA INVALIDA" DO REGISTROREV (NAO PRECISA GERAR EXE NOVO)
    async microcad(req, res) {
       const nserie = String(req.query.nserie || '').trim().toUpperCase()
       const uname = String(req.query.uname || '').trim().toUpperCase()
       const cname = String(req.query.cname || '').trim().toUpperCase()
-      console.log(nserie, uname, cname)
+      const ver = Number(req.query.ver) || 0
+      console.log(nserie, uname, cname, ver)
       const revendas = {
          MC: 'contato@topocad2000.com.br',
          TC: 'compras@totalcad.com.br',
          PA: 'contato@portalagrimensura.com'
+      }
+      const versaoMinima = {
+         TC: 2
       }
       const licences =
          [
@@ -735,6 +743,7 @@ class LicenseController {
          x.uname.toUpperCase() == uname &&
          x.cname.toUpperCase() == cname)
       if (!licence) return res.json({ valid: false })
+      if (ver < (versaoMinima[licence.rev] || 0)) return res.json({ valid: false, atualizar: true })
       return res.json({ valid: true, rev: licence.rev, email: revendas[licence.rev] || '' })
    }
    //
