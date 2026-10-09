@@ -61,7 +61,13 @@ const IA_LIMITE_DIA_NUMERO = 20; // respostas da IA por numero, por dia
 const IA_HISTORICO = 6;          // ultimas mensagens usadas como contexto
 const IA_MAX_TOKENS = 500;       // tamanho maximo da resposta
 const IA_MARCA = /\[ENCAMINHAR\]/gi; // a IA usa quando nao tem a informacao
-const AVISO_IA_INTERVALO_MIN = 60;   // no maximo 1 e-mail por cliente/hora
+// Se a IA disser que encaminhou mas esquecer a marca, vale o texto
+const IA_TEXTO_ENCAMINHOU =
+   /\b(encaminhad[ao]s?|encaminhamos|encaminhei|encaminharemos)\b/i;
+// E-mail da IA: sai quando o cliente para de escrever por este
+// tempo, com a conversa completa (no maximo 1 e-mail por hora)
+const AVISO_IA_ESPERA_MIN = Number(process.env.WA_AVISO_ESPERA_MIN) || 10;
+const AVISO_IA_INTERVALO_MIN = Number(process.env.WA_AVISO_INTERVALO_MIN) || 60;
 const TEXTO_ENCAMINHADO_PADRAO =
    'Sua pergunta foi encaminhada para nossa equipe, que retorna de segunda a sexta, das 9h às 18h.\n\n' +
    'Para ver as opções, digite MENU.';
@@ -78,13 +84,14 @@ const usoIA = new Map(); // numero -> { dia, qtd }
 const processadas = new Set(); // ids de mensagens ja tratadas
 const LIMITE_IDS = 1000;
 const ultimoAvisoIA = new Map(); // numero -> horario do ultimo e-mail
+const avisosPendentes = new Map(); // numero -> e-mail da IA agendado
 
 function registrar(numero, nome, direcao, texto, origem) {
    conversas.push({
       quando: new Date().toISOString(),
       numero,
       nome: nome || '',
-      direcao, // 'RECEBIDA' ou 'ENVIADA'
+      direcao, // 'RECEBIDA', 'ENVIADA' ou 'AVISO' (e-mails, so no painel)
       texto: String(texto || '').substring(0, 2000),
       origem: origem || '' // 'IA' quando a resposta veio da IA
    });
@@ -109,12 +116,13 @@ function agoraBR() {
    return new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
 }
 
+// Retorna '' quando enviou, ou o motivo da falha
 async function enviarEmail(assunto, corpo, rotulo) {
    try {
       if (!WA_MAIL_PASS) {
          console.log(`[WHATSAPP][${rotulo}] WA_MAIL_PASS nao configurada.`,
             'Aviso so no log:', assunto);
-         return;
+         return 'WA_MAIL_PASS nao configurada';
       }
       const transporter = nodemailer.createTransport(emailConfig);
       await transporter.sendMail({
@@ -124,9 +132,18 @@ async function enviarEmail(assunto, corpo, rotulo) {
          text: corpo,
       });
       console.log(`[WHATSAPP][${rotulo}] Aviso enviado para`, WA_AVISO_EMAIL);
+      return '';
    } catch (e) {
       console.log('[WHATSAPP] Falha no aviso por e-mail:', e.message);
+      return e.message || 'erro desconhecido';
    }
+}
+
+// Registra no painel se o e-mail saiu ou falhou
+function registrarEmail(numero, nome, falha) {
+   registrar(numero, nome, 'AVISO', falha
+      ? `FALHA NO E-MAIL para a equipe: ${falha}`
+      : `E-mail enviado para a equipe (${WA_AVISO_EMAIL}).`);
 }
 
 // Opcao 11 - cliente deixou mensagem
@@ -143,9 +160,10 @@ Mensagem do cliente:
 ${texto}
 
 Responda pelo WhatsApp comercial.`;
-   await enviarEmail(
+   const falha = await enviarEmail(
       `WHATSAPP OUTROS ASSUNTOS - ${numero}${nome ? ' - ' + nome : ''}`,
       corpo, 'OUTROS');
+   registrarEmail(numero, nome, falha);
 }
 
 // Resume textos fixos (menu e opcoes) para o e-mail ficar curto
@@ -161,7 +179,7 @@ function resumirTexto(texto) {
 // Ultimas mensagens da conversa com um numero (para o e-mail)
 function historicoTexto(numero, qtd) {
    return conversas
-      .filter((c) => c.numero === numero)
+      .filter((c) => c.numero === numero && c.direcao !== 'AVISO')
       .slice(-qtd)
       .map((c) => {
          const hora = new Date(c.quando).toLocaleTimeString('pt-BR',
@@ -173,15 +191,45 @@ function historicoTexto(numero, qtd) {
       .join('\n\n');
 }
 
-// IA nao resolveu (sem a informacao na base, ou falhou)
-async function avisarIANaoResolveu(numero, nome, pergunta, motivo) {
-   // No maximo 1 e-mail por cliente a cada AVISO_IA_INTERVALO_MIN
-   const agora = Date.now();
-   const ultimo = ultimoAvisoIA.get(numero) || 0;
-   if (agora - ultimo < AVISO_IA_INTERVALO_MIN * 60000) {
-      console.log('[WHATSAPP][IA-AVISO] Ja avisado na ultima hora:', numero);
-      return;
+// IA nao resolveu (sem a informacao na base, ou falhou).
+// O e-mail nao sai na hora: espera o cliente parar de escrever por
+// AVISO_IA_ESPERA_MIN para levar a conversa completa. No maximo 1
+// e-mail por cliente a cada AVISO_IA_INTERVALO_MIN (o que vier depois
+// entra no proximo e-mail, nada se perde).
+function avisarIANaoResolveu(numero, nome, pergunta, motivo) {
+   let p = avisosPendentes.get(numero);
+   if (!p) {
+      p = { nome: '', perguntas: [], motivos: [], timer: null };
+      avisosPendentes.set(numero, p);
+      registrar(numero, nome, 'AVISO',
+         `E-mail para a equipe agendado: sai ${AVISO_IA_ESPERA_MIN} min ` +
+         'depois da ultima mensagem do cliente.');
    }
+   if (nome) p.nome = nome;
+   if (pergunta && !p.perguntas.includes(pergunta)) p.perguntas.push(pergunta);
+   if (!p.motivos.includes(motivo)) p.motivos.push(motivo);
+   reprogramarAvisoIA(numero);
+}
+
+// Chamada a cada mensagem do cliente: adia o e-mail agendado
+function reprogramarAvisoIA(numero) {
+   const p = avisosPendentes.get(numero);
+   if (!p) return;
+   if (p.timer) clearTimeout(p.timer);
+   const agora = Date.now();
+   const liberado = (ultimoAvisoIA.get(numero) || 0) + AVISO_IA_INTERVALO_MIN * 60000;
+   const quando = Math.max(agora + AVISO_IA_ESPERA_MIN * 60000, liberado);
+   p.timer = setTimeout(() => {
+      enviarAvisoIA(numero).catch((e) =>
+         console.log('[WHATSAPP][IA-AVISO] Erro:', e.message));
+   }, quando - agora);
+}
+
+async function enviarAvisoIA(numero) {
+   const p = avisosPendentes.get(numero);
+   if (!p) return;
+   avisosPendentes.delete(numero);
+   const agora = Date.now();
    ultimoAvisoIA.set(numero, agora);
    if (ultimoAvisoIA.size > 500) { // limpa avisos antigos
       for (const [n, t] of ultimoAvisoIA) {
@@ -192,24 +240,25 @@ async function avisarIANaoResolveu(numero, nome, pergunta, motivo) {
    const corpo =
 `A IA NAO RESOLVEU UMA PERGUNTA NO WHATSAPP
 
-Motivo: ${motivo}
+Motivo: ${p.motivos.join('; ')}
 
 Numero: ${numero}
-Nome:   ${nome || '(sem nome)'}
+Nome:   ${p.nome || '(sem nome)'}
 Data:   ${agoraBR()}
 Abrir conversa: https://wa.me/${numero}
 
-Pergunta do cliente:
-${pergunta}
+Pergunta(s) encaminhada(s) pela IA:
+${p.perguntas.map((q) => '- ' + q).join('\n')}
 
-Ultimas mensagens da conversa:
+Conversa (ultimas mensagens):
 
-${historicoTexto(numero, 10)}
+${historicoTexto(numero, 20)}
 
 O cliente foi informado de que a equipe retorna de segunda a sexta, das 9h as 18h.`;
-   await enviarEmail(
-      `WHATSAPP - IA NAO RESOLVEU - ${numero}${nome ? ' - ' + nome : ''}`,
+   const falha = await enviarEmail(
+      `WHATSAPP - IA NAO RESOLVEU - ${numero}${p.nome ? ' - ' + p.nome : ''}`,
       corpo, 'IA-AVISO');
+   registrarEmail(numero, p.nome, falha);
 }
 
 // ----------------------------------------------------------------
@@ -336,7 +385,8 @@ async function responderIA(numero, texto) {
       if (!bruta) return { status: 'erro', resposta: null };
 
       // A IA marca [ENCAMINHAR] quando a base nao tem a informacao
-      const encaminhar = /\[ENCAMINHAR\]/i.test(bruta);
+      // (vale tambem quando ela diz que encaminhou e esquece a marca)
+      const encaminhar = /\[ENCAMINHAR\]/i.test(bruta) || IA_TEXTO_ENCAMINHOU.test(bruta);
       let resposta = bruta.replace(IA_MARCA, '').trim();
       if (encaminhar && !resposta) resposta = textoEncaminhado();
 
@@ -511,6 +561,8 @@ router.post('/api/whatsapp-webhook', async (req, res) => {
 
                registrar(numero, nome, 'RECEBIDA',
                   textoRecebido || `[${msg.type}]`);
+               // Cliente ainda escrevendo: adia o e-mail agendado
+               reprogramarAvisoIA(numero);
 
                let resposta;
                let origem = '';
@@ -543,9 +595,9 @@ router.post('/api/whatsapp-webhook', async (req, res) => {
 
                await enviarTexto(numero, resposta, origem);
 
-               // IA nao resolveu: avisa Felix por e-mail (max 1/hora/cliente)
+               // IA nao resolveu: agenda o e-mail para a equipe
                if (motivoAviso) {
-                  await avisarIANaoResolveu(numero, nome, textoRecebido, motivoAviso);
+                  avisarIANaoResolveu(numero, nome, textoRecebido, motivoAviso);
                }
 
                // Aviso da opcao 11 (depois de confirmar ao cliente)
@@ -571,11 +623,13 @@ router.get('/api/whatsapp-conversas', (req, res) => {
 
    const linhas = conversas.slice().reverse().map(c => {
       const ehIA = c.origem === 'IA';
-      const cor = c.direcao === 'RECEBIDA'
-         ? '#e8f5e9' : (ehIA ? '#fff3e0' : '#e3f2fd');
-      const quando = c.quando.replace('T', ' ').substring(0, 19);
-      const quem = c.direcao === 'RECEBIDA'
-         ? `${c.numero} ${c.nome}` : (ehIA ? 'ATENDENTE (IA)' : 'ATENDENTE');
+      const ehAviso = c.direcao === 'AVISO';
+      const cor = ehAviso ? '#eeeeee' : (c.direcao === 'RECEBIDA'
+         ? '#e8f5e9' : (ehIA ? '#fff3e0' : '#e3f2fd'));
+      const quando = new Date(c.quando).toLocaleString('pt-BR',
+         { timeZone: 'America/Sao_Paulo' });
+      const quem = ehAviso ? `SISTEMA (${c.numero})` : (c.direcao === 'RECEBIDA'
+         ? `${c.numero} ${c.nome}` : (ehIA ? 'ATENDENTE (IA)' : 'ATENDENTE'));
       const texto = String(c.texto)
          .replace(/&/g, '&amp;').replace(/</g, '&lt;')
          .replace(/\n/g, '<br>');
@@ -592,6 +646,8 @@ router.get('/api/whatsapp-conversas', (req, res) => {
       `background:#fafafa">` +
       `<h3 style="font-family:Arial">WHATSAPP MICROCAD - ` +
       `ULTIMAS MENSAGENS (${conversas.length})</h3>` +
+      `<p style="font-family:Arial;font-size:13px;color:#666">Horário de Brasília. ` +
+      `Em cinza: avisos do sistema (e-mails para a equipe).</p>` +
       (linhas || '<p style="font-family:Arial">Nenhuma mensagem ainda.</p>') +
       `</body></html>`
    );
