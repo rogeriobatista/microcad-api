@@ -84,6 +84,9 @@ routes.get('/apiconregistrova/:id',                    LicenseController.conregi
 routes.post('/apiupdregistro',                         LicenseController.updregistro);
 routes.get('/apidelregistro/:id',                      LicenseController.delregistro);
 routes.get('/apilisregistro/:id1',                     LicenseController.lisregistro);
+/** ENVIA N.SERIE - pagina publica + envio por e-mail */
+routes.get('/envianserie',                             LicenseController.envianseriePagina);
+routes.post('/apienvianserie',                         LicenseController.envianserie);
 routes.get('/teste/:id',                               LicenseController.teste);
 routes.get('/testex/:id',ensureToken,                  LicenseController.testex);
 
