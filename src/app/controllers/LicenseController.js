@@ -372,6 +372,178 @@ MICROCAD - Computacao Grafica e Sistemas`;
 
 // =================== FIM MERCADO LIVRE - FASE 1 ===================
 
+// =================== ENVIA N.SERIE (pagina publica /envianserie) ===================
+// O cliente informa CPF/CNPJ + e-mail; se bater com o cadastro (TBLRegistro),
+// o numero de serie e enviado para o e-mail cadastrado. Mesmo fluxo do
+// APISOLICITACHAVE.exe, agora feito pela API (sem SMTP no EXE).
+
+const ENVIANSERIE_COPIA = 'microcad@amicrocad.com.br'; // copia de controle (vazio = sem copia)
+const ENVIANSERIE_LIMITE = 3;                           // pedidos por CGC...
+const ENVIANSERIE_JANELA_MS = 10 * 60 * 1000;           // ...a cada 10 minutos
+const envianserieHistorico = new Map();                 // cgc -> [timestamps]
+
+const envianserieBloqueado = (cgc) => {
+   const agora = Date.now();
+   const lista = (envianserieHistorico.get(cgc) || []).filter(t => agora - t < ENVIANSERIE_JANELA_MS);
+   if (lista.length >= ENVIANSERIE_LIMITE) {
+      envianserieHistorico.set(cgc, lista);
+      return true;
+   }
+   lista.push(agora);
+   envianserieHistorico.set(cgc, lista);
+   return false;
+};
+
+const envianserieMascara = (digitos) => {
+   if (digitos.length === 11) {
+      return `${digitos.substr(0, 3)}.${digitos.substr(3, 3)}.${digitos.substr(6, 3)}-${digitos.substr(9, 2)}`;
+   }
+   if (digitos.length === 14) {
+      return `${digitos.substr(0, 2)}.${digitos.substr(2, 3)}.${digitos.substr(5, 3)}/${digitos.substr(8, 4)}-${digitos.substr(12, 2)}`;
+   }
+   return digitos;
+};
+
+const envianseriePrograma = (nserie) => {
+   switch (String(nserie || '').substr(0, 1).toUpperCase()) {
+      case 'M': return 'MEMORIALCAD';
+      case 'P': return 'PERFIS2000';
+      case 'Q': return 'QFCAD2000';
+      default:  return 'TOPOCAD2000';
+   }
+};
+
+const envianserieHtml = (reg) => {
+   const programa = envianseriePrograma(reg.nserie);
+   const versao = reg.versao || '';
+   const tipo = reg.tipo || '';
+   const cliente = reg.cliente || '';
+   const uf = reg.uf || '';
+
+   let aaa = '';
+   aaa += "<p style='font-family:Arial,sans-serif;font-size:14px;color:#222222;'>Bom dia,</p>";
+   aaa += "<p style='font-family:Arial,sans-serif;font-size:14px;color:#222222;'>Segue o n&uacute;mero de s&eacute;rie (CHAVE VIRTUAL) solicitado para o " + programa + " " + versao + ":</p>";
+   aaa += "<table cellpadding='0' cellspacing='0' style='margin:20px 0;border-collapse:collapse;'>";
+   aaa += "<tr>";
+   aaa += "<td style='background:#008080;padding:6px 14px;color:#ffffff;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;'>N&Uacute;MERO DE S&Eacute;RIE</td>";
+   aaa += "<td style='background:#008080;padding:6px 14px;color:#ffffff;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;border-left:1px solid #ffffff;'>TIPO</td>";
+   aaa += "<td style='background:#008080;padding:6px 14px;color:#ffffff;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;border-left:1px solid #ffffff;'>VERS&Atilde;O</td>";
+   aaa += "</tr>";
+   aaa += "<tr>";
+   aaa += "<td style='background:#ffffff;border:3px solid #008080;border-top:none;padding:18px 40px;text-align:center;font-family:Arial,sans-serif;font-size:38px;font-weight:bold;letter-spacing:4px;color:#008080;'>" + reg.nserie + "</td>";
+   aaa += "<td style='background:#ffffff;border:3px solid #008080;border-top:none;border-left:none;padding:18px 20px;text-align:center;font-family:Arial,sans-serif;font-size:38px;font-weight:bold;color:#008080;'>" + tipo + "</td>";
+   aaa += "<td style='background:#ffffff;border:3px solid #008080;border-top:none;border-left:none;padding:18px 20px;text-align:center;font-family:Arial,sans-serif;font-size:38px;font-weight:bold;color:#008080;'>" + versao + "</td>";
+   aaa += "</tr>";
+   aaa += "</table>";
+   aaa += "<p style='font-family:Arial,sans-serif;font-size:13px;color:#444444;'>Guarde este n&uacute;mero. Ele ser&aacute; solicitado na ativa&ccedil;&atilde;o do sistema.<br>";
+   aaa += "Registro: " + programa + " " + versao + " - " + reg.nserie + " " + tipo + " &gt;&gt;&gt; " + cliente + "-" + uf + "</p>";
+
+   let xxx = "<p style='font-family:Arial,sans-serif;color:black;'>Grato,<br><br><b>Microcad Computa&ccedil;&atilde;o Grafica</b><br><a href='https://www.amicrocad.com.br/' target='_blank'>www.amicrocad.com.br</a>";
+   if (programa === 'TOPOCAD2000') xxx += "<br><a href='https://www.topocad2000.com.br/' target='_blank'>www.topocad2000.com.br</a>";
+   if (programa === 'MEMORIALCAD') xxx += "<br><a href='http://www.memorialcad.com.br/' target='_blank'>www.memorialcad.com.br</a>";
+   xxx += "</p>";
+
+   return {
+      subject: `${programa} ${versao} - Nº DE SÉRIE: ${reg.nserie}`,
+      html: '<html><body>' + aaa + xxx + '</body></html>',
+   };
+};
+
+const ENVIANSERIE_PAGINA = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MICROCAD - ENVIO DO NÚMERO DE SÉRIE</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Arial, sans-serif; background: #f2f5f5; color: #222; }
+  .box { max-width: 440px; margin: 40px auto; background: #fff; border-top: 6px solid #008080; border-radius: 6px; padding: 28px 24px 24px; box-shadow: 0 2px 10px rgba(0,0,0,.08); }
+  h1 { font-size: 20px; margin: 0 0 6px; color: #008080; text-align: center; }
+  p.sub { margin: 0 0 22px; font-size: 14px; color: #555; text-align: center; }
+  label { display: block; font-size: 13px; font-weight: bold; margin: 14px 0 6px; }
+  input { width: 100%; font-size: 18px; padding: 12px; border: 1px solid #bbb; border-radius: 4px; }
+  input:focus { outline: none; border-color: #008080; }
+  button { width: 100%; margin-top: 22px; font-size: 18px; font-weight: bold; padding: 14px; border: 0; border-radius: 4px; background: #008080; color: #fff; cursor: pointer; }
+  button:disabled { background: #9bbcbc; cursor: default; }
+  #msg { margin-top: 20px; padding: 14px; border-radius: 4px; font-size: 15px; line-height: 1.5; display: none; white-space: pre-line; }
+  #msg.ok { display: block; background: #e3f4ef; border: 1px solid #008080; color: #0b4f4f; }
+  #msg.erro { display: block; background: #fdecea; border: 1px solid #c0392b; color: #7b1f16; }
+  .rodape { margin-top: 26px; font-size: 12px; color: #777; text-align: center; }
+  .rodape a { color: #008080; text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>ENVIO DO NÚMERO DE SÉRIE</h1>
+  <p class="sub">Informe o CPF/CNPJ e o e-mail do cadastro.<br>O número de série será enviado para esse e-mail.</p>
+  <form id="frm" autocomplete="off">
+    <label for="cgc">CPF / CNPJ</label>
+    <input id="cgc" name="cgc" inputmode="numeric" placeholder="Somente números" maxlength="18" required>
+    <label for="email">E-MAIL</label>
+    <input id="email" name="email" type="email" placeholder="email@exemplo.com.br" required>
+    <button id="bt" type="submit">ENVIAR NÚMERO DE SÉRIE</button>
+  </form>
+  <div id="msg"></div>
+  <div class="rodape">Microcad Computação Gráfica<br><a href="https://www.topocad2000.com.br/" target="_blank">www.topocad2000.com.br</a></div>
+</div>
+<script>
+  var frm = document.getElementById('frm');
+  var bt = document.getElementById('bt');
+  var msg = document.getElementById('msg');
+  var cgc = document.getElementById('cgc');
+
+  cgc.addEventListener('input', function () {
+    var d = cgc.value.replace(/\\D/g, '').substr(0, 14);
+    if (d.length <= 11) {
+      d = d.replace(/^(\\d{3})(\\d)/, '$1.$2').replace(/^(\\d{3})\\.(\\d{3})(\\d)/, '$1.$2.$3').replace(/\\.(\\d{3})(\\d{1,2})$/, '.$1-$2');
+    } else {
+      d = d.replace(/^(\\d{2})(\\d)/, '$1.$2').replace(/^(\\d{2})\\.(\\d{3})(\\d)/, '$1.$2.$3').replace(/\\.(\\d{3})(\\d)/, '.$1/$2').replace(/(\\d{4})(\\d{1,2})$/, '$1-$2');
+    }
+    cgc.value = d;
+  });
+
+  function mostra(classe, texto) {
+    msg.className = classe;
+    msg.textContent = texto;
+  }
+
+  frm.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var digitos = cgc.value.replace(/\\D/g, '');
+    var email = document.getElementById('email').value.trim();
+    if (digitos.length !== 11 && digitos.length !== 14) {
+      mostra('erro', 'CPF deve ter 11 dígitos ou CNPJ 14 dígitos.');
+      return;
+    }
+    bt.disabled = true;
+    bt.textContent = 'ENVIANDO...';
+    msg.className = '';
+    fetch('/apienvianserie', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cgc: digitos, email: email })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (j) {
+      mostra(j.ok ? 'ok' : 'erro', j.msg || 'ERRO');
+    })
+    .catch(function () {
+      mostra('erro', 'Não foi possível conectar ao servidor.\\nTente novamente em alguns minutos.');
+    })
+    .then(function () {
+      bt.disabled = false;
+      bt.textContent = 'ENVIAR NÚMERO DE SÉRIE';
+    });
+  });
+</script>
+</body>
+</html>
+`;
+
+// =================== FIM ENVIA N.SERIE ===================
+
+
 class LicenseController {
 
    async search(req, res) {
@@ -583,6 +755,84 @@ class LicenseController {
          return res.json(registros);
       }
       return res.json({});
+   }
+   //
+   // ENVIA N.SERIE - pagina publica (GET /envianserie)
+   async envianseriePagina(req, res) {
+      res.set('Content-Type', 'text/html; charset=utf-8');
+      return res.send(ENVIANSERIE_PAGINA);
+   }
+   //
+   // ENVIA N.SERIE - envio por e-mail (POST /apienvianserie {cgc, email})
+   async envianserie(req, res) {
+      const CONTATO = 'Envie solicitação para contato@topocad2000.com.br';
+      let { cgc, email } = req.body;
+
+      cgc = String(cgc || '').replace(/\D/g, '');
+      email = String(email || '').trim().toLowerCase();
+
+      if (cgc.length !== 11 && cgc.length !== 14) {
+         return res.json({ ok: false, cod: 'INVALIDO', msg: 'CPF/CNPJ inválido.' });
+      }
+      if (email.length < 5 || email.indexOf('@') < 1) {
+         return res.json({ ok: false, cod: 'INVALIDO', msg: 'E-mail inválido.' });
+      }
+      if (envianserieBloqueado(cgc)) {
+         console.log('ENVIANSERIE limite', cgc, email);
+         return res.json({ ok: false, cod: 'LIMITE', msg: 'Limite de pedidos atingido para este CPF/CNPJ.\nTente novamente em 10 minutos.' });
+      }
+
+      // o cadastro pode ter o CGC só com números ou com máscara (EXE antigo gravava CPF com máscara)
+      const registros = await TBLRegistro.findAll({
+         where: { cgc: { [Op.in]: [cgc, envianserieMascara(cgc)] } },
+      });
+
+      if (!registros || registros.length === 0) {
+         console.log('ENVIANSERIE nao encontrado', cgc, email);
+         return res.json({ ok: false, cod: 'NAOENCONTRADO', msg: 'CPF/CNPJ não encontrado no cadastro.\n' + CONTATO });
+      }
+
+      const confere = registros.filter(r => String(r.email || '').trim().toLowerCase() === email);
+
+      if (confere.length === 0) {
+         console.log('ENVIANSERIE email nao confere', cgc, email);
+         return res.json({ ok: false, cod: 'EMAILINVALIDO', msg: 'O e-mail não confere com o cadastro deste CPF/CNPJ.\n' + CONTATO });
+      }
+
+      const transporter = nodemailer.createTransport(emailConfig);
+      const enviados = [];
+      const falhas = [];
+
+      for (const reg of confere) {
+         const corpo = envianserieHtml(reg);
+         const mailOptions = {
+            from: '"MICROCAD-Computação Grafica e Sistemas" <microcad.adm@gmail.com>',
+            to: email,
+            subject: corpo.subject,
+            html: corpo.html,
+         };
+         if (ENVIANSERIE_COPIA) mailOptions.cc = ENVIANSERIE_COPIA;
+         try {
+            await transporter.sendMail(mailOptions);
+            enviados.push(reg.nserie);
+            console.log('ENVIANSERIE enviado', reg.nserie, '>>>', email);
+         } catch (e) {
+            falhas.push(reg.nserie);
+            console.log('ENVIANSERIE falha', reg.nserie, '>>>', email, e.message);
+         }
+      }
+
+      if (enviados.length === 0) {
+         return res.json({ ok: false, cod: 'ERROENVIO', msg: 'Não foi possível enviar o e-mail.\nTente novamente mais tarde ou ' + CONTATO.toLowerCase() });
+      }
+
+      const plural = enviados.length > 1 ? `${enviados.length} números de série enviados` : 'Número de série enviado';
+      return res.json({
+         ok: true,
+         cod: 'ENVIADO',
+         qtd: enviados.length,
+         msg: `${plural} para ${email}.\nVerifique também a caixa de SPAM.`,
+      });
    }
 
    async registronet(req, res) {
