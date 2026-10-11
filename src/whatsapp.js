@@ -424,6 +424,10 @@ function normalizar(txt) {
 // Palavras-chave (sem IA): texto livre que leva direto a uma opcao
 // do menu. Avaliadas em ordem - a primeira que casar vence.
 const PALAVRAS_CHAVE = [
+   // 'texto' = nome de um texto em TEXTOS (fora do menu); 'opcao' = item do menu
+   // So quando o cliente PEDE o numero de serie (perdeu, nao sabe,
+   // quer receber); mencionar a serie em outra pergunta vai para a IA
+   { re: /\b(perdi|perdeu|nao sei|nao tenho|nao lembro|esqueci|nao encontro|nao acho|como (consigo|recupero|recebo|pego|descubro|vejo)|quero|preciso|recuperar|reenviar|enviar|mandar)\b.*\b(serie|serial|licenca)\b/, texto: 'NUMERO_SERIE' },
    { re: /\b(atualizar|atualizacao|atualizacoes)\b/, opcao: '5' },
    { re: /\b(video|videos|videoaula|videoaulas|aula|aulas|curso|cursos|treinamento|treinamentos)\b/, opcao: '9' },
    { re: /\b(compativel|compatibilidade|autocad|bricscad|gstarcad|zwcad)\b/, opcao: '7' },
@@ -487,9 +491,10 @@ function decidirResposta(numero, textoOriginal) {
       // responder. Na conversa nova, a resposta direta leva a dica do
       // MENU e, se a IA nao responder, vai o menu (nao o "nao
       // identifiquei").
-      const chave = PALAVRAS_CHAVE.find((p) => p.re.test(txt));
+      const chave = PALAVRAS_CHAVE.find((p) => p.re.test(txt) &&
+         (p.opcao ? TEXTOS.RESPOSTAS[p.opcao] : TEXTOS[p.texto]));
       if (chave) {
-         resposta = TEXTOS.RESPOSTAS[chave.opcao];
+         resposta = chave.opcao ? TEXTOS.RESPOSTAS[chave.opcao] : TEXTOS[chave.texto];
          if (conversaNova) resposta = comDicaMenu(resposta);
       } else {
          resposta = conversaNova ? TEXTOS.SAUDACAO : TEXTOS.PADRAO;
