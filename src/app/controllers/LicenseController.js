@@ -413,38 +413,45 @@ const envianseriePrograma = (nserie) => {
    }
 };
 
-const envianserieHtml = (reg) => {
-   const programa = envianseriePrograma(reg.nserie);
-   const versao = reg.versao || '';
-   const tipo = reg.tipo || '';
-   const cliente = reg.cliente || '';
-   const uf = reg.uf || '';
+const envianserieHtml = (lista) => {
+   const programas = [...new Set(lista.map(r => envianseriePrograma(r.nserie)))];
+   const titulo = lista.length === 1
+      ? `${programas[0]} ${lista[0].versao || ''} - Nº DE SÉRIE: ${lista[0].nserie}`
+      : `MICROCAD - NÚMEROS DE SÉRIE (${lista.length})`;
+
+   const th = "background:#008080;padding:8px 14px;color:#ffffff;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;text-align:center;border:1px solid #008080;";
+   const td = "background:#ffffff;padding:12px 16px;text-align:center;font-family:Arial,sans-serif;font-size:18px;font-weight:bold;color:#008080;border:1px solid #008080;";
+   const tdSerie = td + "font-size:26px;letter-spacing:3px;";
+   const tdCli = "background:#ffffff;padding:12px 16px;text-align:left;font-family:Arial,sans-serif;font-size:13px;color:#444444;border:1px solid #008080;";
 
    let aaa = '';
    aaa += "<p style='font-family:Arial,sans-serif;font-size:14px;color:#222222;'>Bom dia,</p>";
-   aaa += "<p style='font-family:Arial,sans-serif;font-size:14px;color:#222222;'>Segue o n&uacute;mero de s&eacute;rie (CHAVE VIRTUAL) solicitado para o " + programa + " " + versao + ":</p>";
+   if (lista.length === 1) {
+      aaa += "<p style='font-family:Arial,sans-serif;font-size:14px;color:#222222;'>Segue o n&uacute;mero de s&eacute;rie (CHAVE VIRTUAL) solicitado para o " + programas[0] + " " + (lista[0].versao || '') + ":</p>";
+   } else {
+      aaa += "<p style='font-family:Arial,sans-serif;font-size:14px;color:#222222;'>Seguem os " + lista.length + " n&uacute;meros de s&eacute;rie (CHAVE VIRTUAL) encontrados no cadastro deste CPF/CNPJ:</p>";
+   }
    aaa += "<table cellpadding='0' cellspacing='0' style='margin:20px 0;border-collapse:collapse;'>";
-   aaa += "<tr>";
-   aaa += "<td style='background:#008080;padding:6px 14px;color:#ffffff;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;'>N&Uacute;MERO DE S&Eacute;RIE</td>";
-   aaa += "<td style='background:#008080;padding:6px 14px;color:#ffffff;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;border-left:1px solid #ffffff;'>TIPO</td>";
-   aaa += "<td style='background:#008080;padding:6px 14px;color:#ffffff;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;border-left:1px solid #ffffff;'>VERS&Atilde;O</td>";
-   aaa += "</tr>";
-   aaa += "<tr>";
-   aaa += "<td style='background:#ffffff;border:3px solid #008080;border-top:none;padding:18px 40px;text-align:center;font-family:Arial,sans-serif;font-size:38px;font-weight:bold;letter-spacing:4px;color:#008080;'>" + reg.nserie + "</td>";
-   aaa += "<td style='background:#ffffff;border:3px solid #008080;border-top:none;border-left:none;padding:18px 20px;text-align:center;font-family:Arial,sans-serif;font-size:38px;font-weight:bold;color:#008080;'>" + tipo + "</td>";
-   aaa += "<td style='background:#ffffff;border:3px solid #008080;border-top:none;border-left:none;padding:18px 20px;text-align:center;font-family:Arial,sans-serif;font-size:38px;font-weight:bold;color:#008080;'>" + versao + "</td>";
-   aaa += "</tr>";
+   aaa += "<tr><th style='" + th + "'>PROGRAMA</th><th style='" + th + "'>VERS&Atilde;O</th><th style='" + th + "'>TIPO</th><th style='" + th + "'>N&Uacute;MERO DE S&Eacute;RIE</th><th style='" + th + "'>REGISTRO</th></tr>";
+   for (const reg of lista) {
+      aaa += "<tr>";
+      aaa += "<td style='" + td + "'>" + envianseriePrograma(reg.nserie) + "</td>";
+      aaa += "<td style='" + td + "'>" + (reg.versao || '') + "</td>";
+      aaa += "<td style='" + td + "'>" + (reg.tipo || '') + "</td>";
+      aaa += "<td style='" + tdSerie + "'>" + reg.nserie + "</td>";
+      aaa += "<td style='" + tdCli + "'>" + (reg.cliente || '') + "-" + (reg.uf || '') + "</td>";
+      aaa += "</tr>";
+   }
    aaa += "</table>";
-   aaa += "<p style='font-family:Arial,sans-serif;font-size:13px;color:#444444;'>Guarde este n&uacute;mero. Ele ser&aacute; solicitado na ativa&ccedil;&atilde;o do sistema.<br>";
-   aaa += "Registro: " + programa + " " + versao + " - " + reg.nserie + " " + tipo + " &gt;&gt;&gt; " + cliente + "-" + uf + "</p>";
+   aaa += "<p style='font-family:Arial,sans-serif;font-size:13px;color:#444444;'>Guarde este" + (lista.length > 1 ? "s n&uacute;meros. Eles ser&atilde;o solicitados" : " n&uacute;mero. Ele ser&aacute; solicitado") + " na ativa&ccedil;&atilde;o do sistema.</p>";
 
    let xxx = "<p style='font-family:Arial,sans-serif;color:black;'>Grato,<br><br><b>Microcad Computa&ccedil;&atilde;o Grafica</b><br><a href='https://www.amicrocad.com.br/' target='_blank'>www.amicrocad.com.br</a>";
-   if (programa === 'TOPOCAD2000') xxx += "<br><a href='https://www.topocad2000.com.br/' target='_blank'>www.topocad2000.com.br</a>";
-   if (programa === 'MEMORIALCAD') xxx += "<br><a href='http://www.memorialcad.com.br/' target='_blank'>www.memorialcad.com.br</a>";
+   if (programas.includes('TOPOCAD2000')) xxx += "<br><a href='https://www.topocad2000.com.br/' target='_blank'>www.topocad2000.com.br</a>";
+   if (programas.includes('MEMORIALCAD')) xxx += "<br><a href='http://www.memorialcad.com.br/' target='_blank'>www.memorialcad.com.br</a>";
    xxx += "</p>";
 
    return {
-      subject: `${programa} ${versao} - Nº DE SÉRIE: ${reg.nserie}`,
+      subject: titulo,
       html: '<html><body>' + aaa + xxx + '</body></html>',
    };
 };
@@ -799,38 +806,31 @@ class LicenseController {
          return res.json({ ok: false, cod: 'EMAILINVALIDO', msg: 'O e-mail não confere com o cadastro deste CPF/CNPJ.\n' + CONTATO });
       }
 
-      const transporter = nodemailer.createTransport(emailConfig);
-      const enviados = [];
-      const falhas = [];
+      const corpo = envianserieHtml(confere);
+      const mailOptions = {
+         from: '"MICROCAD-Computação Grafica e Sistemas" <microcad.adm@gmail.com>',
+         to: email,
+         subject: corpo.subject,
+         html: corpo.html,
+      };
+      if (ENVIANSERIE_COPIA) mailOptions.cc = ENVIANSERIE_COPIA;
 
-      for (const reg of confere) {
-         const corpo = envianserieHtml(reg);
-         const mailOptions = {
-            from: '"MICROCAD-Computação Grafica e Sistemas" <microcad.adm@gmail.com>',
-            to: email,
-            subject: corpo.subject,
-            html: corpo.html,
-         };
-         if (ENVIANSERIE_COPIA) mailOptions.cc = ENVIANSERIE_COPIA;
-         try {
-            await transporter.sendMail(mailOptions);
-            enviados.push(reg.nserie);
-            console.log('ENVIANSERIE enviado', reg.nserie, '>>>', email);
-         } catch (e) {
-            falhas.push(reg.nserie);
-            console.log('ENVIANSERIE falha', reg.nserie, '>>>', email, e.message);
-         }
+      try {
+         const transporter = nodemailer.createTransport(emailConfig);
+         await transporter.sendMail(mailOptions);
+      } catch (e) {
+         console.log('ENVIANSERIE falha envio', cgc, '>>>', email, e.message);
+         return res.json({ ok: false, cod: 'ERROENVIO', msg: 'Não foi possível enviar o e-mail.\nTente novamente mais tarde ou envie solicitação para contato@topocad2000.com.br' });
       }
 
-      if (enviados.length === 0) {
-         return res.json({ ok: false, cod: 'ERROENVIO', msg: 'Não foi possível enviar o e-mail.\nTente novamente mais tarde ou ' + CONTATO.toLowerCase() });
-      }
+      const seriais = confere.map(r => r.nserie);
+      console.log('ENVIANSERIE enviado', seriais.join(','), '>>>', email);
 
-      const plural = enviados.length > 1 ? `${enviados.length} números de série enviados` : 'Número de série enviado';
+      const plural = seriais.length > 1 ? `${seriais.length} números de série enviados em um único e-mail` : 'Número de série enviado';
       return res.json({
          ok: true,
          cod: 'ENVIADO',
-         qtd: enviados.length,
+         qtd: seriais.length,
          msg: `${plural} para ${email}.\nVerifique também a caixa de SPAM.`,
       });
    }
