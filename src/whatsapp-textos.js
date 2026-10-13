@@ -162,6 +162,12 @@ const PADRAO = `Não identifiquei sua opção.
 
 Responda apenas com o NÚMERO de uma das opções do menu (1 a 11), ou digite MENU para ver as opções novamente.`;
 
+// Cliente mandou audio, imagem, PDF, figurinha etc. (uma vez so;
+// se insistir, o atendente fica em silencio e avisa a equipe)
+const SO_TEXTO = `Este canal não ouve áudios nem abre imagens ou arquivos.
+
+Escreva sua dúvida em texto, ou digite o NÚMERO de uma das opções do menu (1 a 11). Para ver o menu, digite MENU.`;
+
 const AGRADECIMENTO = `Agradecemos por utilizar nossos serviços! Esperamos trabalhar com você novamente em breve.`;
 
 // Cliente perdeu ou nao sabe o numero de serie (palavra-chave)
@@ -228,6 +234,6 @@ REGRAS OBRIGATÓRIAS:
 - Quando fizer sentido, termine com: "Para ver as opções, digite MENU."`;
 
 export default {
-   SAUDACAO, RESPOSTAS, RECEBIDO_OUTROS, PADRAO, AGRADECIMENTO,
+   SAUDACAO, RESPOSTAS, RECEBIDO_OUTROS, PADRAO, SO_TEXTO, AGRADECIMENTO,
    NUMERO_SERIE, ENCAMINHADO, IA_SOBRE, IA_REGRAS
 };
