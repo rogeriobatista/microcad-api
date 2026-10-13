@@ -77,7 +77,11 @@ const TEXTO_ENCAMINHADO_PADRAO =
 // ----------------------------------------------------------------
 const LIMITE_LOG = 500;
 const conversas = []; // { quando, numero, nome, direcao, texto, origem }
-const estado = new Map(); // numero -> { ultima, aguardandoOutros, avisarOutros }
+const estado = new Map(); // numero -> { ultima, aguardandoOutros, avisarOutros, midias }
+const MIDIAS_PARA_AVISO = 2; // audios/imagens seguidos sem texto -> e-mail
+const TEXTO_SO_TEXTO_PADRAO =
+   'Este canal não ouve áudios nem abre imagens ou arquivos.\n\n' +
+   'Escreva sua dúvida em texto, ou digite o NÚMERO de uma das opções do menu (1 a 11).';
 const JANELA_SAUDACAO_HORAS = 24; // nova conversa depois deste tempo
 const historicoIA = new Map(); // numero -> [{ role, content }]
 const usoIA = new Map(); // numero -> { dia, qtd }
@@ -237,8 +241,12 @@ async function enviarAvisoIA(numero) {
       }
    }
 
+   const soMidia = p.perguntas.every((q) => /^\[\w+\]$/.test(q));
+   const titulo = soMidia
+      ? 'CLIENTE SO ENVIOU AUDIO/IMAGEM NO WHATSAPP'
+      : 'A IA NAO RESOLVEU UMA PERGUNTA NO WHATSAPP';
    const corpo =
-`A IA NAO RESOLVEU UMA PERGUNTA NO WHATSAPP
+`${titulo}
 
 Motivo: ${p.motivos.join('; ')}
 
@@ -247,7 +255,7 @@ Nome:   ${p.nome || '(sem nome)'}
 Data:   ${agoraBR()}
 Abrir conversa: https://wa.me/${numero}
 
-Pergunta(s) encaminhada(s) pela IA:
+${soMidia ? 'Recebido (abra a conversa para ver):' : 'Pergunta(s) encaminhada(s) pela IA:'}
 ${p.perguntas.map((q) => '- ' + q).join('\n')}
 
 Conversa (ultimas mensagens):
@@ -256,7 +264,7 @@ ${historicoTexto(numero, 20)}
 
 O cliente foi informado de que a equipe retorna de segunda a sexta, das 9h as 18h.`;
    const falha = await enviarEmail(
-      `WHATSAPP - IA NAO RESOLVEU - ${numero}${p.nome ? ' - ' + p.nome : ''}`,
+      `WHATSAPP - ${soMidia ? 'SO AUDIO/IMAGEM' : 'IA NAO RESOLVEU'} - ${numero}${p.nome ? ' - ' + p.nome : ''}`,
       corpo, 'IA-AVISO');
    registrarEmail(numero, p.nome, falha);
 }
@@ -573,12 +581,22 @@ router.post('/api/whatsapp-webhook', async (req, res) => {
                let origem = '';
                let motivoAviso = ''; // preenchido quando a IA nao resolveu
                if (!textoRecebido) {
-                  // Conteudo nao-texto: reforca o canal correto
-                  resposta = TEXTOS.PADRAO;
+                  // Audio, imagem, PDF etc.: avisa UMA vez que o canal so le
+                  // texto; se o cliente insistir, fica em silencio e, a partir
+                  // da 2a midia, agenda o e-mail para a equipe olhar
                   const st = estado.get(numero) || {};
                   st.ultima = new Date();
+                  st.midias = (st.midias || 0) + 1;
                   estado.set(numero, st);
+                  resposta = st.midias === 1
+                     ? (TEXTOS.SO_TEXTO || TEXTO_SO_TEXTO_PADRAO) : '';
+                  if (st.midias === MIDIAS_PARA_AVISO) {
+                     motivoAviso = `cliente enviou ${MIDIAS_PARA_AVISO} audios/imagens` +
+                        ' sem escrever (ver pelo WhatsApp)';
+                  }
                } else {
+                  const stM = estado.get(numero);
+                  if (stM && stM.midias) { stM.midias = 0; estado.set(numero, stM); }
                   const decisao = decidirResposta(numero, textoRecebido);
                   resposta = decisao.resposta;
                   if (decisao.ia) {
@@ -598,11 +616,12 @@ router.post('/api/whatsapp-webhook', async (req, res) => {
                   }
                }
 
-               await enviarTexto(numero, resposta, origem);
+               if (resposta) await enviarTexto(numero, resposta, origem);
 
-               // IA nao resolveu: agenda o e-mail para a equipe
+               // IA nao resolveu (ou so midias): agenda o e-mail para a equipe
                if (motivoAviso) {
-                  avisarIANaoResolveu(numero, nome, textoRecebido, motivoAviso);
+                  avisarIANaoResolveu(numero, nome,
+                     textoRecebido || `[${msg.type}]`, motivoAviso);
                }
 
                // Aviso da opcao 11 (depois de confirmar ao cliente)
