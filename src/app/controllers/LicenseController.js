@@ -550,6 +550,141 @@ const ENVIANSERIE_PAGINA = `<!DOCTYPE html>
 
 // =================== FIM ENVIA N.SERIE ===================
 
+// =================== ENVIA LINK DO TESTE (pagina publica /envialink) ===================
+// Para quem chega pelo celular na pagina de download do site: informa nome + e-mail
+// e recebe o link do instalador do TOPOCAD2000 V21 (teste de 30 dias) por e-mail.
+// Nao consulta banco. Copia para ENVIALINK_COPIA para acompanhamento.
+
+const ENVIALINK_COPIA = 'microcad@amicrocad.com.br';   // copia de controle (vazio = sem copia)
+const ENVIALINK_LIMITE = 3;                             // pedidos por e-mail...
+const ENVIALINK_JANELA_MS = 10 * 60 * 1000;             // ...a cada 10 minutos
+const ENVIALINK_URL_EXE = 'https://www.topocad2000.com.br/downloads/TOPOCAD2000V21.exe';
+const ENVIALINK_URL_AULAS = 'https://www.amicrocad.com.br/topocad2000-videoaulas';
+const envialinkHistorico = new Map();                   // email -> [timestamps]
+
+const envialinkBloqueado = (email) => {
+   const agora = Date.now();
+   const lista = (envialinkHistorico.get(email) || []).filter(t => agora - t < ENVIALINK_JANELA_MS);
+   if (lista.length >= ENVIALINK_LIMITE) {
+      envialinkHistorico.set(email, lista);
+      return true;
+   }
+   lista.push(agora);
+   envialinkHistorico.set(email, lista);
+   return false;
+};
+
+const envialinkEscapa = (s) => String(s || '').replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+
+const envialinkHtml = (nome) => {
+   const p = "margin:0 0 12px;font-size:15px;line-height:1.6;color:#222;";
+   const li = "margin:0 0 8px;font-size:15px;line-height:1.6;color:#222;";
+   const bt = "display:inline-block;background:#008080;color:#fff;text-decoration:none;font-size:17px;font-weight:bold;padding:14px 26px;border-radius:6px;";
+   const saud = nome ? `Olá, ${envialinkEscapa(nome)}.` : 'Olá.';
+   return {
+      subject: 'TOPOCAD2000 V21 - link para instalar o teste de 30 dias',
+      html: `<html><body style="margin:0;padding:0;background:#f2f5f5;font-family:Arial,sans-serif;">
+<div style="max-width:560px;margin:0 auto;background:#fff;padding:28px 24px;border-top:6px solid #008080;">
+<h2 style="margin:0 0 16px;font-size:20px;color:#008080;">TOPOCAD2000 V21 - TESTE GRÁTIS POR 30 DIAS</h2>
+<p style="${p}">${saud}<br>Aqui está o link que você pediu no site.<br>Abra este e-mail no computador onde vai instalar.</p>
+<p style="margin:22px 0;text-align:center;"><a href="${ENVIALINK_URL_EXE}" style="${bt}">BAIXAR O TOPOCAD2000 V21</a></p>
+<p style="${p}">Se o botão não abrir, copie este endereço no navegador:<br><a href="${ENVIALINK_URL_EXE}" style="color:#008080;">${ENVIALINK_URL_EXE}</a></p>
+<p style="${p}"><b>Como instalar:</b></p>
+<ol style="margin:0 0 16px;padding-left:22px;">
+<li style="${li}">Feche o AutoCAD, BricsCAD, GstarCAD ou ZWCAD.</li>
+<li style="${li}">Execute o arquivo baixado e siga a instalação.</li>
+<li style="${li}">Abra o CAD. O menu TOPOCAD2000 aparece sozinho.</li>
+<li style="${li}">No primeiro comando, escolha UTILIZAÇÃO POR 30 DIAS.</li>
+</ol>
+<p style="${p}"><b>O teste é completo, sem limitações, por 30 dias.</b><br>Compatível com AutoCAD 2007 e 2010 ao 2027, BricsCAD Pro, GstarCAD e ZWCAD Professional.</p>
+<p style="${p}">Cada comando tem um botão VÍDEO com as videoaulas.<br>Todas estão em <a href="${ENVIALINK_URL_AULAS}" style="color:#008080;">${ENVIALINK_URL_AULAS}</a></p>
+<p style="${p}">Dúvidas: <a href="mailto:contato@topocad2000.com.br" style="color:#008080;">contato@topocad2000.com.br</a></p>
+<p style="margin:24px 0 0;font-size:12px;color:#777;">Microcad Computação Gráfica - www.topocad2000.com.br</p>
+</div></body></html>`,
+   };
+};
+
+const ENVIALINK_PAGINA = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TOPOCAD2000 - RECEBER O LINK DO TESTE</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Arial, sans-serif; background: #f2f5f5; color: #222; }
+  .box { max-width: 440px; margin: 40px auto; background: #fff; border-top: 6px solid #008080; border-radius: 6px; padding: 28px 24px 24px; box-shadow: 0 2px 10px rgba(0,0,0,.08); }
+  h1 { font-size: 20px; margin: 0 0 6px; color: #008080; text-align: center; }
+  p.sub { margin: 0 0 22px; font-size: 14px; color: #555; text-align: center; line-height: 1.5; }
+  label { display: block; font-size: 13px; font-weight: bold; margin: 14px 0 6px; }
+  input { width: 100%; font-size: 18px; padding: 12px; border: 1px solid #bbb; border-radius: 4px; }
+  input:focus { outline: none; border-color: #008080; }
+  button { width: 100%; margin-top: 22px; font-size: 18px; font-weight: bold; padding: 14px; border: 0; border-radius: 4px; background: #008080; color: #fff; cursor: pointer; }
+  button:disabled { background: #9bbcbc; cursor: default; }
+  #msg { margin-top: 20px; padding: 14px; border-radius: 4px; font-size: 15px; line-height: 1.5; display: none; white-space: pre-line; }
+  #msg.ok { display: block; background: #e3f4ef; border: 1px solid #008080; color: #0b4f4f; }
+  #msg.erro { display: block; background: #fdecea; border: 1px solid #c0392b; color: #7b1f16; }
+  .rodape { margin-top: 26px; font-size: 12px; color: #777; text-align: center; }
+  .rodape a { color: #008080; text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>TOPOCAD2000 V21 - TESTE GRÁTIS</h1>
+  <p class="sub">O TOPOCAD2000 instala no computador, dentro do AutoCAD, BricsCAD, GstarCAD ou ZWCAD.<br>Informe seu e-mail e receba o link para instalar depois.</p>
+  <form id="frm" autocomplete="on">
+    <label for="nome">NOME</label>
+    <input id="nome" name="nome" type="text" placeholder="Seu nome" maxlength="60" required>
+    <label for="email">E-MAIL</label>
+    <input id="email" name="email" type="email" placeholder="email@exemplo.com.br" required>
+    <button id="bt" type="submit">RECEBER O LINK POR E-MAIL</button>
+  </form>
+  <div id="msg"></div>
+  <div class="rodape">Teste completo por 30 dias, sem limitações.<br>Microcad Computação Gráfica<br><a href="https://www.topocad2000.com.br/" target="_blank">www.topocad2000.com.br</a></div>
+</div>
+<script>
+  var frm = document.getElementById('frm');
+  var bt = document.getElementById('bt');
+  var msg = document.getElementById('msg');
+  var origem = (new URLSearchParams(location.search).get('origem') || '').substr(0, 40);
+
+  function mostra(classe, texto) {
+    msg.className = classe;
+    msg.textContent = texto;
+  }
+
+  frm.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var nome = document.getElementById('nome').value.trim();
+    var email = document.getElementById('email').value.trim();
+    bt.disabled = true;
+    bt.textContent = 'ENVIANDO...';
+    msg.className = '';
+    fetch('/apienvialink', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome: nome, email: email, origem: origem })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (j) {
+      mostra(j.ok ? 'ok' : 'erro', j.msg || 'ERRO');
+    })
+    .catch(function () {
+      mostra('erro', 'Não foi possível conectar ao servidor.\\nTente novamente em alguns minutos.');
+    })
+    .then(function () {
+      bt.disabled = false;
+      bt.textContent = 'RECEBER O LINK POR E-MAIL';
+    });
+  });
+</script>
+</body>
+</html>
+`;
+
+// =================== FIM ENVIA LINK DO TESTE ===================
+
+
 
 class LicenseController {
 
@@ -832,6 +967,58 @@ class LicenseController {
          cod: 'ENVIADO',
          qtd: seriais.length,
          msg: `${plural} para ${email}.\nVerifique também a caixa de SPAM.`,
+      });
+   }
+
+   //
+   // ENVIA LINK DO TESTE - pagina publica (GET /envialink?origem=xxx)
+   async envialinkPagina(req, res) {
+      res.set('Content-Type', 'text/html; charset=utf-8');
+      return res.send(ENVIALINK_PAGINA);
+   }
+   //
+   // ENVIA LINK DO TESTE - envio por e-mail (POST /apienvialink {nome, email, origem})
+   async envialink(req, res) {
+      let { nome, email, origem } = req.body;
+
+      nome = String(nome || '').trim().substr(0, 60);
+      email = String(email || '').trim().toLowerCase().substr(0, 120);
+      origem = String(origem || '').trim().substr(0, 40);
+
+      if (email.length < 5 || email.indexOf('@') < 1 || email.indexOf('.') < 0) {
+         return res.json({ ok: false, cod: 'INVALIDO', msg: 'E-mail inválido.' });
+      }
+      if (envialinkBloqueado(email)) {
+         console.log('ENVIALINK limite', email);
+         return res.json({ ok: false, cod: 'LIMITE', msg: 'O link já foi enviado para este e-mail.\nVerifique também a caixa de SPAM.' });
+      }
+
+      const corpo = envialinkHtml(nome);
+      const mailOptions = {
+         from: '"MICROCAD-Computação Grafica e Sistemas" <microcad.adm@gmail.com>',
+         to: email,
+         subject: corpo.subject,
+         html: corpo.html,
+      };
+      if (ENVIALINK_COPIA) {
+         mailOptions.bcc = ENVIALINK_COPIA;
+         // identifica o pedido na copia sem aparecer para o cliente
+         mailOptions.headers = { 'X-Envialink': `${nome} | ${email} | ${origem || 'sem-origem'}` };
+      }
+
+      try {
+         const transporter = nodemailer.createTransport(emailConfig);
+         await transporter.sendMail(mailOptions);
+      } catch (e) {
+         console.log('ENVIALINK falha envio', email, e.message);
+         return res.json({ ok: false, cod: 'ERROENVIO', msg: 'Não foi possível enviar o e-mail.\nTente novamente mais tarde ou escreva para contato@topocad2000.com.br' });
+      }
+
+      console.log('ENVIALINK enviado', nome, '>>>', email, origem);
+      return res.json({
+         ok: true,
+         cod: 'ENVIADO',
+         msg: `Link enviado para ${email}.\nAbra o e-mail no computador onde vai instalar.\nVerifique também a caixa de SPAM.`,
       });
    }
 
