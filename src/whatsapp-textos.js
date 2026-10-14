@@ -28,7 +28,12 @@ Não envie áudios nem chamadas: não são reconhecidos neste canal.`;
 const RESPOSTAS = {
    "1": `TOPOCAD2000 V21
 
-De R$ 830,00 por R$ 625,00 à vista no PIX ou boleto, ou em até 10x no cartão de crédito sem juros.
+De R$ 830,00 por R$ 625,00.
+
+À vista no PIX ou boleto, ou no cartão em até 10x sem juros.
+Na loja virtual, para mais de 3x escolha *Mercado Pago* na tela de pagamento (a primeira opção, do próprio site, vai só até 3x).
+No Mercado Livre, até 10x sem juros:
+https://www.mercadolivre.com.br/topocad2000-v21--microcad-envio-por-email/up/MLBU3881792188
 
 Licença vitalícia para a versão adquirida, atualizações gratuitas enquanto for a versão atual e suporte por e-mail ilimitado.
 
@@ -59,7 +64,12 @@ Antes, confira nossas vídeo aulas - a maioria das dúvidas está respondida nel
 
 https://www.amicrocad.com.br/topocad2000/lojavirtual
 
-TOPOCAD2000 V21 - de R$ 830,00 por R$ 625,00 à vista no PIX ou boleto, ou em até 10x no cartão sem juros.
+TOPOCAD2000 V21 - de R$ 830,00 por R$ 625,00.
+
+À vista no PIX ou boleto, ou no cartão em até 10x sem juros.
+Na loja virtual, para mais de 3x escolha *Mercado Pago* na tela de pagamento (a primeira opção, do próprio site, vai só até 3x).
+No Mercado Livre, até 10x sem juros:
+https://www.mercadolivre.com.br/topocad2000-v21--microcad-envio-por-email/up/MLBU3881792188
 
 Após a confirmação do pagamento você recebe os dados de instalação e o registro da licença.
 
@@ -67,7 +77,12 @@ Qualquer dificuldade no processo, responda por aqui.`,
 
    "4": `TOPOCAD2000 V21
 
-De R$ 830,00 por R$ 625,00 à vista no PIX ou boleto, ou em até 10x no cartão sem juros.
+De R$ 830,00 por R$ 625,00.
+
+À vista no PIX ou boleto, ou no cartão em até 10x sem juros.
+Na loja virtual, para mais de 3x escolha *Mercado Pago* na tela de pagamento (a primeira opção, do próprio site, vai só até 3x).
+No Mercado Livre, até 10x sem juros:
+https://www.mercadolivre.com.br/topocad2000-v21--microcad-envio-por-email/up/MLBU3881792188
 
 Loja virtual 24h:
 https://www.amicrocad.com.br/topocad2000/lojavirtual
@@ -95,7 +110,8 @@ INCLUI
 - V19 para V21: de R$ 500,00 por R$ 450,00
 - Demais versões para V21: de R$ 600,00 por R$ 500,00
 
-À vista no PIX ou boleto, ou em até 10x no cartão de crédito sem juros.
+À vista no PIX ou boleto, ou no cartão em até 10x sem juros.
+Na loja virtual, para mais de 3x escolha *Mercado Pago* na tela de pagamento (a primeira opção, do próprio site, vai só até 3x).
 
 Verifique sua versão e compre a atualização direto por aqui, 24 horas:
 https://www.amicrocad.com.br/topocad2000/verificar-versao
@@ -205,6 +221,7 @@ const IA_SOBRE = `SOBRE A MICROCAD E O TOPOCAD2000
   - Curvas de nível, declividade, mapa de cotas, perfis e divisão de áreas.
   - Coletores GNSS: HI-TARGET, TRIMBLE, SATLAB, LANDSTAR, SOUTH, COMNAV e outros.
 - Licença vitalícia para a versão adquirida, sem mensalidade.
+- Pagamento: PIX ou boleto à vista; cartão em até 10x sem juros. Na loja virtual, a primeira opção de pagamento (do próprio site) vai só até 3x; para mais de 3x o cliente deve escolher Mercado Pago na tela de pagamento. No Mercado Livre (https://www.mercadolivre.com.br/topocad2000-v21--microcad-envio-por-email/up/MLBU3881792188) também até 10x sem juros.
 - Entrega por e-mail, com proteção de uso virtual ou por PendriveLock (opcional).
 - Pessoa física (CPF): instalação em até 3 micros para uso próprio, não simultâneo.
 - Pessoa jurídica (CNPJ): instalação em 1 micro, para uso de qualquer pessoa da empresa.
@@ -224,6 +241,7 @@ REGRAS OBRIGATÓRIAS:
 - Se a BASE não tiver a informação pedida, ou se o pedido precisar de uma pessoa (orçamento especial, desconto, revenda, parceria, nota fiscal de compra já feita, negociação), comece a resposta com a marca [ENCAMINHAR] e diga ao cliente, em uma ou duas linhas, que a pergunta foi encaminhada para nossa equipe, que retorna de segunda a sexta, das 9h às 18h. Não invente a resposta e não peça para digitar 11.
 - Cliente que não sabe ou perdeu o número de série: indique o link https://microcad.azurewebsites.net/envianserie (informar CPF/CNPJ e e-mail do cadastro; o número de série chega por e-mail). Não precisa encaminhar.
 - Cliente que envia um número de série (ex.: T2466) ou pede para verificar a versão ou o cadastro: você não tem acesso ao cadastro. Comece com [ENCAMINHAR] e diga que nossa equipe vai verificar o cadastro e retorna de segunda a sexta, das 9h às 18h.
+- Cliente diz que só aparecem 3 parcelas, ou pergunta como parcelar em mais de 3x: explique que na tela de pagamento da loja virtual ele deve escolher Mercado Pago (até 10x sem juros). Não encaminhe.
 - Dificuldade na loja virtual ou na verificação de versão do site (CPF não encontrado, cadastro antigo, pagamento que não conclui, link que não abre): não faça perguntas, comece com [ENCAMINHAR] e diga que nossa equipe vai verificar e retorna de segunda a sexta, das 9h às 18h.
 - Depois de encaminhar, se o cliente continuar escrevendo sobre o mesmo assunto, não faça novas perguntas: comece de novo com [ENCAMINHAR] e confirme em uma linha que nossa equipe vai ver a conversa completa e que ele pode acrescentar detalhes por aqui.
 - Só use a marca [ENCAMINHAR] nesses casos. Quando a BASE responde a pergunta, responda normalmente, sem a marca.
