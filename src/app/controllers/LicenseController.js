@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-import { Op, col } from 'sequelize';
+import { Op, col, QueryTypes } from 'sequelize';
 
 import jwt from "jsonwebtoken";
 
@@ -683,6 +683,44 @@ const ENVIALINK_PAGINA = `<!DOCTYPE html>
 `;
 
 // =================== FIM ENVIA LINK DO TESTE ===================
+
+
+// =================== CADASTRO DO TESTE 30 DIAS (DADOSINS000) ===================
+// Nome, e-mail, cidade e UF de quem habilita o teste de 30 dias
+// (TOPOCAD2000: MICROCAD5.LSP > DLL MICROCADAPIINS000CAD > PUT /apiupdins000cad).
+// As 4 colunas sao criadas aqui, uma unica vez, na primeira chamada da rota.
+// O model TBLDadosins000 nao muda: as rotas antigas continuam iguais mesmo se o ALTER falhar.
+let cad000Colunas = null; // promise da criacao das colunas (null = ainda nao criou ou falhou)
+
+const cad000GaranteColunas = () => {
+   if (!cad000Colunas) {
+      const tab = TBLDadosins000.getTableName();
+      cad000Colunas = TBLDadosins000.sequelize.query(
+         `IF COL_LENGTH('${tab}', 'nome')   IS NULL ALTER TABLE [${tab}] ADD nome   NVARCHAR(255) NULL;
+          IF COL_LENGTH('${tab}', 'email')  IS NULL ALTER TABLE [${tab}] ADD email  NVARCHAR(255) NULL;
+          IF COL_LENGTH('${tab}', 'cidade') IS NULL ALTER TABLE [${tab}] ADD cidade NVARCHAR(255) NULL;
+          IF COL_LENGTH('${tab}', 'uf')     IS NULL ALTER TABLE [${tab}] ADD uf     NVARCHAR(10)  NULL;`
+      ).catch((err) => {
+         cad000Colunas = null; // tenta de novo na proxima chamada
+         throw err;
+      });
+   }
+   return cad000Colunas;
+};
+
+const cad000Texto = (valor, tamanho) => String(valor || '').replace(/\s+/g, ' ').trim().substring(0, tamanho);
+
+// data/hora de Brasilia (yyMMdd / HHmmss), so se a DLL nao mandar
+const cad000Agora = () => {
+   const d = new Date(Date.now() - 3 * 60 * 60 * 1000);
+   const z = (n) => String(n).padStart(2, '0');
+   return {
+      data: z(d.getUTCFullYear() % 100) + z(d.getUTCMonth() + 1) + z(d.getUTCDate()),
+      hora: z(d.getUTCHours()) + z(d.getUTCMinutes()) + z(d.getUTCSeconds()),
+   };
+};
+
+// =================== FIM CADASTRO DO TESTE 30 DIAS ===================
 
 
 
@@ -1768,6 +1806,63 @@ class LicenseController {
          cadv: cadv,
       });
       return res.json(addRecord);
+   }
+   //DADOSINS000CAD - CADASTRO DO TESTE 30 DIAS (NOME / EMAIL / CIDADE / UF)
+   async updins000cad(req, res) {
+      const agora = cad000Agora();
+      const b = req.body || {};
+      const rep = {
+         nvxx:   cad000Texto(b.nvxx, 255),
+         uname:  cad000Texto(b.uname, 255),
+         cname:  cad000Texto(b.cname, 255),
+         ndata:  /^\d{6}$/.test(String(b.ndata || '')) ? String(b.ndata) : agora.data,
+         nhora:  /^\d{6}$/.test(String(b.nhora || '')) ? String(b.nhora) : agora.hora,
+         nvyy:   cad000Texto(b.nvyy, 255),
+         cadv:   cad000Texto(b.cadv, 255),
+         nome:   cad000Texto(b.nome, 255),
+         email:  cad000Texto(b.email, 255).toLowerCase(),
+         cidade: cad000Texto(b.cidade, 255),
+         uf:     cad000Texto(b.uf, 10).toUpperCase(),
+      };
+      if (!rep.nvxx || !rep.uname || !rep.cname) {
+         return res.status(400).json({ ok: 0, msg: 'DADOS INCOMPLETOS' });
+      }
+      try {
+         await cad000GaranteColunas();
+         const tab = TBLDadosins000.getTableName();
+         const seq = TBLDadosins000.sequelize;
+         const onde = 'nvxx = :nvxx AND uname = :uname AND cname = :cname';
+
+         const achados = await seq.query(
+            `SELECT id FROM [${tab}] WHERE ${onde}`,
+            { replacements: rep, type: QueryTypes.SELECT }
+         );
+         if (achados.length > 0) {
+            // ja existe (instalacao ja registrada): atualiza so os campos preenchidos
+            await seq.query(
+               `UPDATE [${tab}] SET
+                   nome   = COALESCE(NULLIF(:nome, ''),   nome),
+                   email  = COALESCE(NULLIF(:email, ''),  email),
+                   cidade = COALESCE(NULLIF(:cidade, ''), cidade),
+                   uf     = COALESCE(NULLIF(:uf, ''),     uf)
+                WHERE ${onde}`,
+               { replacements: rep }
+            );
+            return res.json({ ok: 1, acao: 'U', id: achados[0].id });
+         }
+         // nao existe: cria como a /apiupdins000 criaria, ja com o cadastro
+         const novos = await seq.query(
+            `INSERT INTO [${tab}] (nvxx, uname, cname, ndata, nhora, udata, uhora, exe, nvyy, cadv, nome, email, cidade, uf)
+             OUTPUT INSERTED.id
+             VALUES (:nvxx, :uname, :cname, :ndata, :nhora, :ndata, :nhora, '-', :nvyy, :cadv,
+                     NULLIF(:nome, ''), NULLIF(:email, ''), NULLIF(:cidade, ''), NULLIF(:uf, ''))`,
+            { replacements: rep, type: QueryTypes.SELECT }
+         );
+         return res.json({ ok: 1, acao: 'I', id: novos.length > 0 ? novos[0].id : 0 });
+      } catch (err) {
+         console.error('UPDINS000CAD ERRO:', err && err.message ? err.message : err);
+         return res.status(500).json({ ok: 0, msg: 'ERRO' });
+      }
    }
    //
    //DADOSTXT
