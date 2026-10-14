@@ -87,6 +87,9 @@ routes.get('/apilisregistro/:id1',                     LicenseController.lisregi
 /** ENVIA N.SERIE - pagina publica + envio por e-mail */
 routes.get('/envianserie',                             LicenseController.envianseriePagina);
 routes.post('/apienvianserie',                         LicenseController.envianserie);
+/** ENVIA LINK DO TESTE - pagina publica + envio por e-mail */
+routes.get('/envialink',                               LicenseController.envialinkPagina);
+routes.post('/apienvialink',                           LicenseController.envialink);
 routes.get('/teste/:id',                               LicenseController.teste);
 routes.get('/testex/:id',ensureToken,                  LicenseController.testex);
 
