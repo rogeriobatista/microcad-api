@@ -106,6 +106,7 @@ routes.put('/apidelins',                               LicenseController.delins)
 routes.get('/apitotins/:id1',                          LicenseController.totins);
 routes.put('/apiupdins000',                            LicenseController.updins000);
 routes.put('/apiupdins000X',                           LicenseController.updins000X);
+routes.put('/apiupdins000cad',                         LicenseController.updins000cad);
 //
 routes.get('/apiupdtxt/:id1&:id2&:id3',                LicenseController.updtxt);
 routes.get('/apiconatu/:id1',                          LicenseController.conatu);
