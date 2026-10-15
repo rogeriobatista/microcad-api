@@ -20,6 +20,10 @@ class TBLDadosins000 extends Model {
             exe: Sequelize.STRING,
             nvyy: Sequelize.STRING,
             cadv: Sequelize.STRING,
+            nome: Sequelize.STRING,   // cadastro do teste 30 dias (colunas criadas pela /apiupdins000cad)
+            email: Sequelize.STRING,
+            cidade: Sequelize.STRING,
+            uf: Sequelize.STRING,
          },
          {
             sequelize,
