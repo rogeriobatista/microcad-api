@@ -186,6 +186,9 @@ Escreva sua dúvida em texto, ou digite o NÚMERO de uma das opções do menu (1
 
 const AGRADECIMENTO = `Agradecemos por utilizar nossos serviços! Esperamos trabalhar com você novamente em breve.`;
 
+// Cliente pergunta sobre Black Friday (palavra-chave). Sem detalhes.
+const BLACK_FRIDAY = `Sim, teremos Black Friday em novembro.`;
+
 // Cliente perdeu ou nao sabe o numero de serie (palavra-chave)
 const NUMERO_SERIE = `NÚMERO DE SÉRIE
 
@@ -228,7 +231,8 @@ const IA_SOBRE = `SOBRE A MICROCAD E O TOPOCAD2000
 - Garantia geral de 1 ano. Suporte ilimitado por e-mail, 24h todos os dias.
 - Cliente que perdeu ou não sabe o número de série: recebe por e-mail em https://microcad.azurewebsites.net/envianserie, informando o CPF/CNPJ e o e-mail do cadastro.
 - Cadastros muito antigos podem não ter o CPF registrado; nesse caso a verificação de versão do site e o envio do número de série não encontram o cliente, e nossa equipe resolve.
-- Site: www.topocad2000.com.br (videoaulas, downloads, grupos de WhatsApp, parcerias, revendas, cursos e treinamentos).`;
+- Site: www.topocad2000.com.br (videoaulas, downloads, grupos de WhatsApp, parcerias, revendas, cursos e treinamentos).
+- Black Friday: sim, teremos Black Friday em novembro. Não há outros detalhes para informar.`;
 
 const IA_REGRAS = `Você é o atendente virtual do WhatsApp comercial da MICROCAD (software TOPOCAD2000).
 
@@ -244,6 +248,7 @@ REGRAS OBRIGATÓRIAS:
 - Cliente diz que só aparecem 3 parcelas, ou pergunta como parcelar em mais de 3x: explique que na tela de pagamento da loja virtual ele deve escolher Mercado Pago (até 10x sem juros). Não encaminhe.
 - Dificuldade na loja virtual ou na verificação de versão do site (CPF não encontrado, cadastro antigo, pagamento que não conclui, link que não abre): não faça perguntas, comece com [ENCAMINHAR] e diga que nossa equipe vai verificar e retorna de segunda a sexta, das 9h às 18h.
 - Depois de encaminhar, se o cliente continuar escrevendo sobre o mesmo assunto, não faça novas perguntas: comece de novo com [ENCAMINHAR] e confirme em uma linha que nossa equipe vai ver a conversa completa e que ele pode acrescentar detalhes por aqui.
+- Pergunta sobre Black Friday: responda apenas "Sim, teremos Black Friday em novembro." Não informe datas, descontos nem condições e não encaminhe.
 - Só use a marca [ENCAMINHAR] nesses casos. Quando a BASE responde a pergunta, responda normalmente, sem a marca.
 - Não converse sobre assuntos que não sejam da MICROCAD e dos seus produtos.
 - Nunca peça senhas, dados de cartão ou documentos.
@@ -253,5 +258,5 @@ REGRAS OBRIGATÓRIAS:
 
 export default {
    SAUDACAO, RESPOSTAS, RECEBIDO_OUTROS, PADRAO, SO_TEXTO, AGRADECIMENTO,
-   NUMERO_SERIE, ENCAMINHADO, IA_SOBRE, IA_REGRAS
+   BLACK_FRIDAY, NUMERO_SERIE, ENCAMINHADO, IA_SOBRE, IA_REGRAS
 };
