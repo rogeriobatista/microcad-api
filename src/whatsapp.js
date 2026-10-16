@@ -433,6 +433,9 @@ function normalizar(txt) {
 // do menu. Avaliadas em ordem - a primeira que casar vence.
 const PALAVRAS_CHAVE = [
    // 'texto' = nome de um texto em TEXTOS (fora do menu); 'opcao' = item do menu
+   // Black Friday vem antes de "atualizar" ("vai ter black friday para
+   // quem vai atualizar?" -> resposta da Black Friday, nao a tabela)
+   { re: /\bblack\b|\bblackfriday\b/, texto: 'BLACK_FRIDAY' },
    // So quando o cliente PEDE o numero de serie (perdeu, nao sabe,
    // quer receber); mencionar a serie em outra pergunta vai para a IA
    { re: /\b(perdi|perdeu|nao sei|nao tenho|nao lembro|esqueci|nao encontro|nao acho|como (consigo|recupero|recebo|pego|descubro|vejo)|quero|preciso|recuperar|reenviar|enviar|mandar)\b.*\b(serie|serial|licenca)\b/, texto: 'NUMERO_SERIE' },
@@ -444,6 +447,18 @@ const PALAVRAS_CHAVE = [
    { re: /\b(erro|erros|problema|problemas|suporte|travando|travou)\b/, opcao: '2' },
    { re: /\b(telefone|contato|contatos|falar|atendente|humano|ligar)\b/, opcao: '10' },
 ];
+
+// Agradecimento so quando a mensagem e curta e so agradece ("obrigado",
+// "ok, valeu", "muito grato pela atencao"). Texto longo que termina com
+// "obrigado", pergunta (?) ou pedido com palavra-chave segue o fluxo
+// normal (opcao 11, palavras-chave ou IA).
+const AGRADECE = /\b(obrigad|valeu|grat[oa]|agradec)/;
+const AGRADECIMENTO_MAX_PALAVRAS = 8;
+function soAgradecimento(txt) {
+   return AGRADECE.test(txt) && !txt.includes('?') &&
+      txt.split(/\s+/).filter(Boolean).length <= AGRADECIMENTO_MAX_PALAVRAS &&
+      !PALAVRAS_CHAVE.some((p) => p.re.test(txt));
+}
 
 // Mensagem que e so cumprimento (um ou varios) -> manda o menu
 const SO_CUMPRIMENTO = /^((oi+|ola|opa|alo|e ai|eai|bom dia|boa tarde|boa noite|tudo bem|td bem|tudo bom)[\s!,.?]*)+$/;
@@ -483,7 +498,7 @@ function decidirResposta(numero, textoOriginal) {
    } else if (txt === 'menu' || txt === '/menu' || txt === '0') {
       resposta = TEXTOS.SAUDACAO;
       st.aguardandoOutros = false;
-   } else if (/\b(obrigad|valeu|grat[oa]|agradec)/.test(txt)) {
+   } else if (soAgradecimento(txt)) {
       resposta = TEXTOS.AGRADECIMENTO;
       st.aguardandoOutros = false;
    } else if (st.aguardandoOutros) {
