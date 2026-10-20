@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import LicenseController from './app/controllers/LicenseController';
 import whatsappRouter from './whatsapp';
+import mcpRouter from './mcp';
 import jwt from "jsonwebtoken";
 import { next } from 'sucrase/dist/parser/tokenizer';
 
@@ -151,4 +152,6 @@ routes.post('/api/ml-webhook', LicenseController.mlWebhook);
 routes.get('/api/ml-diag/:chave', LicenseController.mlDiag);
 /** API WhatsApp - Atendente virtual */
 routes.use(whatsappRouter);
+/** MCP - conector somente leitura para o Claude (consulta REGISTRONET por e-mail/CPF) */
+routes.use(mcpRouter);
 export default routes;
