@@ -10,7 +10,7 @@ Agradecemos seu contato.
 Responda com o NÚMERO da opção:
 
 1 - COMERCIAL
-2 - SUPORTE (só por e-mail)
+2 - SUPORTE 24H (só por e-mail)
 3 - ADQUIRIR NOVA
 4 - INFORMAÇÕES
 5 - ADQUIRIR ATUALIZAÇÃO
