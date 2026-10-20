@@ -21,10 +21,17 @@
 //   WA_IA_KEY           -> chave da API da Anthropic (Claude). Sem ela
 //                          a IA fica desligada e vale a resposta padrao.
 //   WA_IA_MODEL         -> (opcional) modelo; padrao claude-haiku-4-5
+//   WA_HIST_ARQ         -> (opcional) arquivo onde o painel guarda as
+//                          ultimas mensagens, para nao zerar no deploy.
+//                          No Azure o padrao e /home/data/whatsapp-
+//                          conversas.json (fora do wwwroot); fora do
+//                          Azure fica desligado se vazio.
 // ================================================================
 
 import { Router } from 'express';
 import https from 'https';
+import fs from 'fs';
+import path from 'path';
 import nodemailer from 'nodemailer';
 import TEXTOS from './whatsapp-textos';
 
@@ -73,15 +80,78 @@ const TEXTO_ENCAMINHADO_PADRAO =
    'Para ver as opções, digite MENU.';
 
 // ----------------------------------------------------------------
-// Memoria de conversas e estado (zera quando o App Service reinicia)
+// Numeros especiais do menu (definidos em whatsapp-textos.js). Os
+// valores padrao sao os do menu de 1 a 11, para o codigo funcionar
+// igual com a versao antiga dos textos.
+// ----------------------------------------------------------------
+const OPCAO_OUTROS = TEXTOS.OPCAO_OUTROS || '11';     // deixar mensagem
+const OPCAO_CONTATOS = TEXTOS.OPCAO_CONTATOS || '10'; // outros contatos
+const OPCAO_CURSOS = TEXTOS.OPCAO_CURSOS || '9';      // cursos parceiros
+const ULTIMA_OPCAO = Math.max(...Object.keys(TEXTOS.RESPOSTAS)
+   .filter((k) => /^\d+$/.test(k)).map(Number));
+function ehOpcaoMenu(txt) {
+   return /^\d{1,2}$/.test(txt) &&
+      Object.prototype.hasOwnProperty.call(TEXTOS.RESPOSTAS, txt);
+}
+
+// Mesma resposta de palavra-chave pedida de novo em seguida: em vez de
+// repetir o texto inteiro, avisa que ja esta na mensagem acima
+const REPETIDA_MIN = 30;
+const TEXTO_JA_RESPONDIDO_PADRAO =
+   'As informações sobre isso estão na mensagem acima.\n\n' +
+   'Para outras opções, digite MENU.';
+
+// ----------------------------------------------------------------
+// Memoria de conversas e estado. As conversas do painel tambem vao
+// para um arquivo (WA_HIST_ARQ) e voltam quando o App Service
+// reinicia; o estado de cada numero zera no reinicio.
 // ----------------------------------------------------------------
 const LIMITE_LOG = 500;
 const conversas = []; // { quando, numero, nome, direcao, texto, origem }
-const estado = new Map(); // numero -> { ultima, aguardandoOutros, avisarOutros, midias }
+const estado = new Map(); // numero -> { ultima, aguardandoOutros, avisarOutros, midias, ultimaChave, ultimaChaveEm }
 const MIDIAS_PARA_AVISO = 2; // audios/imagens seguidos sem texto -> e-mail
 const TEXTO_SO_TEXTO_PADRAO =
    'Este canal não ouve áudios nem abre imagens ou arquivos.\n\n' +
-   'Escreva sua dúvida em texto, ou digite o NÚMERO de uma das opções do menu (1 a 11).';
+   `Escreva sua dúvida em texto, ou digite o NÚMERO de uma das opções do menu (1 a ${ULTIMA_OPCAO}).`;
+
+// Historico do painel em arquivo (no Azure, /home e persistente e fica
+// fora do wwwroot que o deploy substitui)
+const HIST_ARQ = process.env.WA_HIST_ARQ !== undefined
+   ? process.env.WA_HIST_ARQ
+   : (process.env.WEBSITE_SITE_NAME ? '/home/data/whatsapp-conversas.json' : '');
+const HIST_ESPERA_MS = 3000; // junta varias mensagens numa gravacao so
+let histTimer = null;
+
+function carregarHistorico() {
+   if (!HIST_ARQ) return;
+   try {
+      if (!fs.existsSync(HIST_ARQ)) return;
+      const lista = JSON.parse(fs.readFileSync(HIST_ARQ, 'utf8'));
+      if (Array.isArray(lista)) {
+         conversas.push(...lista.filter((c) => c && c.quando && c.direcao)
+            .slice(-LIMITE_LOG));
+      }
+      console.log('[WHATSAPP] Historico do painel carregado:', conversas.length);
+   } catch (e) {
+      console.log('[WHATSAPP] Nao foi possivel ler o historico:', e.message);
+   }
+}
+
+function gravarHistorico() {
+   if (!HIST_ARQ || histTimer) return;
+   histTimer = setTimeout(() => {
+      histTimer = null;
+      try {
+         fs.mkdirSync(path.dirname(HIST_ARQ), { recursive: true });
+         const tmp = HIST_ARQ + '.tmp';
+         fs.writeFileSync(tmp, JSON.stringify(conversas));
+         fs.renameSync(tmp, HIST_ARQ);
+      } catch (e) {
+         console.log('[WHATSAPP] Nao foi possivel gravar o historico:', e.message);
+      }
+   }, HIST_ESPERA_MS);
+   if (histTimer.unref) histTimer.unref();
+}
 const JANELA_SAUDACAO_HORAS = 24; // nova conversa depois deste tempo
 const historicoIA = new Map(); // numero -> [{ role, content }]
 const usoIA = new Map(); // numero -> { dia, qtd }
@@ -100,7 +170,9 @@ function registrar(numero, nome, direcao, texto, origem) {
       origem: origem || '' // 'IA' quando a resposta veio da IA
    });
    while (conversas.length > LIMITE_LOG) conversas.shift();
+   gravarHistorico();
 }
+carregarHistorico();
 
 // A Meta pode reenviar a mesma mensagem; responde so uma vez
 function jaProcessada(id) {
@@ -150,10 +222,10 @@ function registrarEmail(numero, nome, falha) {
       : `E-mail enviado para a equipe (${WA_AVISO_EMAIL}).`);
 }
 
-// Opcao 11 - cliente deixou mensagem
+// Opcao "outros assuntos" (OPCAO_OUTROS) - cliente deixou mensagem
 async function avisarFelix(numero, nome, texto) {
    const corpo =
-`SOLICITACAO PELO WHATSAPP (OPCAO 11 - OUTROS ASSUNTOS)
+`SOLICITACAO PELO WHATSAPP (OPCAO ${OPCAO_OUTROS} - OUTROS ASSUNTOS)
 
 Numero: ${numero}
 Nome:   ${nome || '(sem nome)'}
@@ -440,18 +512,20 @@ const PALAVRAS_CHAVE = [
    // quer receber); mencionar a serie em outra pergunta vai para a IA
    { re: /\b(perdi|perdeu|nao sei|nao tenho|nao lembro|esqueci|nao encontro|nao acho|como (consigo|recupero|recebo|pego|descubro|vejo)|quero|preciso|recuperar|reenviar|enviar|mandar)\b.*\b(serie|serial|licenca)\b/, texto: 'NUMERO_SERIE' },
    { re: /\b(atualizar|atualizacao|atualizacoes)\b/, opcao: '5' },
-   { re: /\b(video|videos|videoaula|videoaulas|aula|aulas|curso|cursos|treinamento|treinamentos)\b/, opcao: '9' },
+   { re: /\b(video|videos|videoaula|videoaulas|aula|aulas)\b/, opcao: '9' },
+   // Cursos: empresas parceiras (a Microcad nao oferece cursos)
+   { re: /\b(curso|cursos|treinamento|treinamentos)\b/, opcao: OPCAO_CURSOS },
    { re: /\b(compativel|compatibilidade|autocad|bricscad|gstarcad|zwcad)\b/, opcao: '7' },
    { re: /\b(testar|teste|demonstracao|demo|baixar|download|instalar)\b/, opcao: '6' },
    { re: /\b(preco|precos|valor|valores|comprar|compra|custa|custo)\b/, opcao: '1' },
    { re: /\b(erro|erros|problema|problemas|suporte|travando|travou)\b/, opcao: '2' },
-   { re: /\b(telefone|contato|contatos|falar|atendente|humano|ligar)\b/, opcao: '10' },
+   { re: /\b(telefone|contato|contatos|falar|atendente|humano|ligar)\b/, opcao: OPCAO_CONTATOS },
 ];
 
 // Agradecimento so quando a mensagem e curta e so agradece ("obrigado",
 // "ok, valeu", "muito grato pela atencao"). Texto longo que termina com
 // "obrigado", pergunta (?) ou pedido com palavra-chave segue o fluxo
-// normal (opcao 11, palavras-chave ou IA).
+// normal (outros assuntos, palavras-chave ou IA).
 const AGRADECE = /\b(obrigad|valeu|grat[oa]|agradec)/;
 const AGRADECIMENTO_MAX_PALAVRAS = 8;
 function soAgradecimento(txt) {
@@ -482,19 +556,22 @@ function decidirResposta(numero, textoOriginal) {
 
    let resposta;
    let ia = false;
+   let chaveResp = null; // qual resposta fixa saiu (para nao repetir)
 
    // Conversa nova (1a mensagem ou mais de 24h sem conversa):
-   // esquece o contexto antigo da IA e a espera da opcao 11
+   // esquece o contexto antigo da IA e a espera de "outros assuntos"
    const conversaNova = horasDesdeUltima >= JANELA_SAUDACAO_HORAS;
    if (conversaNova) {
       historicoIA.delete(numero);
       st.aguardandoOutros = false;
+      st.ultimaChave = null;
    }
 
-   if (/^(?:[1-9]|1[01])$/.test(txt)) {
-      // Opcao do menu (1 a 11)
+   if (ehOpcaoMenu(txt)) {
+      // Opcao do menu digitada pelo numero: sempre manda o texto inteiro
       resposta = TEXTOS.RESPOSTAS[txt];
-      st.aguardandoOutros = (txt === '11');
+      st.aguardandoOutros = (txt === OPCAO_OUTROS);
+      chaveResp = 'op' + txt;
    } else if (txt === 'menu' || txt === '/menu' || txt === '0') {
       resposta = TEXTOS.SAUDACAO;
       st.aguardandoOutros = false;
@@ -502,7 +579,7 @@ function decidirResposta(numero, textoOriginal) {
       resposta = TEXTOS.AGRADECIMENTO;
       st.aguardandoOutros = false;
    } else if (st.aguardandoOutros) {
-      // Cliente descreveu a solicitacao da opcao 11
+      // Cliente descreveu a solicitacao de "outros assuntos"
       resposta = TEXTOS.RECEBIDO_OUTROS;
       st.aguardandoOutros = false;
       st.avisarOutros = true; // sinaliza para disparar o aviso
@@ -517,12 +594,28 @@ function decidirResposta(numero, textoOriginal) {
       const chave = PALAVRAS_CHAVE.find((p) => p.re.test(txt) &&
          (p.opcao ? TEXTOS.RESPOSTAS[p.opcao] : TEXTOS[p.texto]));
       if (chave) {
-         resposta = chave.opcao ? TEXTOS.RESPOSTAS[chave.opcao] : TEXTOS[chave.texto];
-         if (conversaNova) resposta = comDicaMenu(resposta);
+         chaveResp = chave.opcao ? 'op' + chave.opcao : chave.texto;
+         const repetida = st.ultimaChave === chaveResp && st.ultimaChaveEm &&
+            (agora - st.ultimaChaveEm) < REPETIDA_MIN * 60000;
+         if (repetida) {
+            // Ja mandou este mesmo texto na mensagem anterior
+            resposta = TEXTOS.JA_RESPONDIDO || TEXTO_JA_RESPONDIDO_PADRAO;
+         } else {
+            resposta = chave.opcao ? TEXTOS.RESPOSTAS[chave.opcao] : TEXTOS[chave.texto];
+            if (conversaNova) resposta = comDicaMenu(resposta);
+         }
       } else {
          resposta = conversaNova ? TEXTOS.SAUDACAO : TEXTOS.PADRAO;
          ia = true;
       }
+   }
+
+   // Guarda a ultima resposta fixa; qualquer outra resposta zera
+   if (chaveResp) {
+      if (st.ultimaChave !== chaveResp) st.ultimaChaveEm = agora;
+      st.ultimaChave = chaveResp;
+   } else {
+      st.ultimaChave = null;
    }
 
    st.ultima = agora;
@@ -639,7 +732,7 @@ router.post('/api/whatsapp-webhook', async (req, res) => {
                      textoRecebido || `[${msg.type}]`, motivoAviso);
                }
 
-               // Aviso da opcao 11 (depois de confirmar ao cliente)
+               // Aviso de "outros assuntos" (depois de confirmar ao cliente)
                const st = estado.get(numero);
                if (st && st.avisarOutros) {
                   st.avisarOutros = false;
