@@ -17,9 +17,10 @@ Responda com o NÚMERO da opção:
 6 - TESTAR POR 30 DIAS
 7 - COMPATIBILIDADE
 8 - LISTA DE ATUALIZAÇÕES
-9 - VIDEOAULAS E CURSOS
-10 - OUTROS CONTATOS
-11 - OUTROS ASSUNTOS (deixar mensagem)
+9 - VIDEOAULAS
+10 - CURSOS (EMPRESAS PARCEIRAS)
+11 - OUTROS CONTATOS
+12 - OUTROS ASSUNTOS (deixar mensagem)
 
 Atendimento 24h por este canal.
 Para voltar a este menu, digite MENU.
@@ -145,18 +146,26 @@ ZWCADs: 2020 ao 2027 (Professional) / Standard: Não compatível`,
 
 https://www.topocad2000.com.br/downloads/TOPOCAD2000.TXT`,
 
-   "9": `VIDEOAULAS E CURSOS
+   "9": `VIDEOAULAS
 
-A maioria das dúvidas está respondida nas videoaulas:
+A maioria das dúvidas está respondida nas videoaulas gratuitas:
 
-- No site www.topocad2000.com.br > VIDEO AULAS
+- No site: https://www.amicrocad.com.br/topocad2000-videoaulas
 - Dentro do programa, cada comando tem um botão VÍDEO com as aulas daquele comando
-
-No site você também encontra CURSOS / TREINAMENTOS.
 
 Para voltar ao menu, digite MENU.`,
 
-   "10": `OUTROS CONTATOS
+   "10": `CURSOS (EMPRESAS PARCEIRAS)
+
+A Microcad não oferece cursos.
+Cursos de topografia, georreferenciamento e GNSS são oferecidos por empresas parceiras independentes:
+https://www.amicrocad.com.br/topocad-cursos
+
+Para aprender o TOPOCAD2000, as videoaulas são gratuitas (opção 9).
+
+Para voltar ao menu, digite MENU.`,
+
+   "11": `OUTROS CONTATOS
 
 SUPORTE (24h, todos os dias, só por e-mail):
 contato@topocad2000.com.br
@@ -166,25 +175,35 @@ COMERCIAL (horário comercial, segunda a sexta, das 9h às 18h):
 
 Para voltar ao menu, digite MENU.`,
 
-   "11": `Certo. Descreva sua solicitação em uma mensagem que retornaremos no horário de atendimento: segunda a sexta, das 9h às 18h.`
+   "12": `Certo. Descreva sua solicitação em uma mensagem que retornaremos no horário de atendimento: segunda a sexta, das 9h às 18h.`
 };
 
-// Confirmacao enviada quando o cliente descreve a solicitacao da opcao 11
+// Numeros especiais do menu (usados pelo whatsapp.js)
+const OPCAO_CURSOS = '10';   // palavras curso/treinamento
+const OPCAO_CONTATOS = '11'; // palavras telefone/contato/falar
+const OPCAO_OUTROS = '12';   // deixar mensagem (aviso por e-mail)
+
+// Confirmacao enviada quando o cliente descreve a solicitacao da opcao 12
 const RECEBIDO_OUTROS = `Recebido! Sua mensagem foi encaminhada e retornaremos no horário de atendimento: segunda a sexta, das 9h às 18h.
 
 Para outras opções, digite MENU.`;
 
 const PADRAO = `Não identifiquei sua opção.
 
-Responda apenas com o NÚMERO de uma das opções do menu (1 a 11), ou digite MENU para ver as opções novamente.`;
+Responda apenas com o NÚMERO de uma das opções do menu (1 a 12), ou digite MENU para ver as opções novamente.`;
 
 // Cliente mandou audio, imagem, PDF, figurinha etc. (uma vez so;
 // se insistir, o atendente fica em silencio e avisa a equipe)
 const SO_TEXTO = `Este canal não ouve áudios nem abre imagens ou arquivos.
 
-Escreva sua dúvida em texto, ou digite o NÚMERO de uma das opções do menu (1 a 11). Para ver o menu, digite MENU.`;
+Escreva sua dúvida em texto, ou digite o NÚMERO de uma das opções do menu (1 a 12). Para ver o menu, digite MENU.`;
 
 const AGRADECIMENTO = `Agradecemos por utilizar nossos serviços! Esperamos trabalhar com você novamente em breve.`;
+
+// Cliente pede de novo, em seguida, a mesma resposta de palavra-chave
+const JA_RESPONDIDO = `As informações sobre isso estão na mensagem acima.
+
+Para outras opções, digite MENU.`;
 
 // Cliente pergunta sobre Black Friday (palavra-chave). Sem detalhes.
 const BLACK_FRIDAY = `Sim, teremos Black Friday em novembro.`;
@@ -231,7 +250,9 @@ const IA_SOBRE = `SOBRE A MICROCAD E O TOPOCAD2000
 - Garantia geral de 1 ano. Suporte ilimitado por e-mail, 24h todos os dias.
 - Cliente que perdeu ou não sabe o número de série: recebe por e-mail em https://microcad.azurewebsites.net/envianserie, informando o CPF/CNPJ e o e-mail do cadastro.
 - Cadastros muito antigos podem não ter o CPF registrado; nesse caso a verificação de versão do site e o envio do número de série não encontram o cliente, e nossa equipe resolve.
-- Site: www.topocad2000.com.br (videoaulas, downloads, grupos de WhatsApp, parcerias, revendas, cursos e treinamentos).
+- Site: www.topocad2000.com.br (videoaulas, downloads, grupos de WhatsApp, parcerias, revendas e a página de cursos de empresas parceiras).
+- Videoaulas do TOPOCAD2000: gratuitas (opção 9), em https://www.amicrocad.com.br/topocad2000-videoaulas e pelo botão VÍDEO de cada comando.
+- A Microcad não oferece cursos. Cursos de topografia, georreferenciamento e GNSS são de empresas parceiras independentes (opção 10): https://www.amicrocad.com.br/topocad-cursos. A Microcad não organiza esses cursos nem responde por conteúdo, preços ou condições.
 - Black Friday: sim, teremos Black Friday em novembro. Não há outros detalhes para informar.`;
 
 const IA_REGRAS = `Você é o atendente virtual do WhatsApp comercial da MICROCAD (software TOPOCAD2000).
@@ -242,12 +263,13 @@ REGRAS OBRIGATÓRIAS:
 - Suporte técnico (erros, instalação, problemas de uso) é feito exclusivamente por e-mail: contato@topocad2000.com.br. Não tente resolver problemas técnicos; oriente a enviar o e-mail e a ver as videoaulas (opção 9).
 - Dúvidas sobre como usar um comando específico: indique as videoaulas (opção 9) e o suporte por e-mail.
 - Quando a resposta estiver em uma opção do menu, indique o número (ex.: "digite 6 para o link de download").
-- Se a BASE não tiver a informação pedida, ou se o pedido precisar de uma pessoa (orçamento especial, desconto, revenda, parceria, nota fiscal de compra já feita, negociação), comece a resposta com a marca [ENCAMINHAR] e diga ao cliente, em uma ou duas linhas, que a pergunta foi encaminhada para nossa equipe, que retorna de segunda a sexta, das 9h às 18h. Não invente a resposta e não peça para digitar 11.
+- Se a BASE não tiver a informação pedida, ou se o pedido precisar de uma pessoa (orçamento especial, desconto, revenda, parceria, nota fiscal de compra já feita, negociação), comece a resposta com a marca [ENCAMINHAR] e diga ao cliente, em uma ou duas linhas, que a pergunta foi encaminhada para nossa equipe, que retorna de segunda a sexta, das 9h às 18h. Não invente a resposta e não peça para digitar 12.
 - Cliente que não sabe ou perdeu o número de série: indique o link https://microcad.azurewebsites.net/envianserie (informar CPF/CNPJ e e-mail do cadastro; o número de série chega por e-mail). Não precisa encaminhar.
 - Cliente que envia um número de série (ex.: T2466) ou pede para verificar a versão ou o cadastro: você não tem acesso ao cadastro. Comece com [ENCAMINHAR] e diga que nossa equipe vai verificar o cadastro e retorna de segunda a sexta, das 9h às 18h.
 - Cliente diz que só aparecem 3 parcelas, ou pergunta como parcelar em mais de 3x: explique que na tela de pagamento da loja virtual ele deve escolher Mercado Pago (até 10x sem juros). Não encaminhe.
 - Dificuldade na loja virtual ou na verificação de versão do site (CPF não encontrado, cadastro antigo, pagamento que não conclui, link que não abre): não faça perguntas, comece com [ENCAMINHAR] e diga que nossa equipe vai verificar e retorna de segunda a sexta, das 9h às 18h.
 - Depois de encaminhar, se o cliente continuar escrevendo sobre o mesmo assunto, não faça novas perguntas: comece de novo com [ENCAMINHAR] e confirme em uma linha que nossa equipe vai ver a conversa completa e que ele pode acrescentar detalhes por aqui.
+- Pergunta sobre cursos ou treinamentos: diga que a Microcad não oferece cursos e indique a opção 10 (cursos de empresas parceiras); para aprender o TOPOCAD2000, indique as videoaulas gratuitas (opção 9). Não encaminhe.
 - Pergunta sobre Black Friday: responda apenas "Sim, teremos Black Friday em novembro." Não informe datas, descontos nem condições e não encaminhe.
 - Só use a marca [ENCAMINHAR] nesses casos. Quando a BASE responde a pergunta, responda normalmente, sem a marca.
 - Não converse sobre assuntos que não sejam da MICROCAD e dos seus produtos.
@@ -258,5 +280,6 @@ REGRAS OBRIGATÓRIAS:
 
 export default {
    SAUDACAO, RESPOSTAS, RECEBIDO_OUTROS, PADRAO, SO_TEXTO, AGRADECIMENTO,
-   BLACK_FRIDAY, NUMERO_SERIE, ENCAMINHADO, IA_SOBRE, IA_REGRAS
+   JA_RESPONDIDO, BLACK_FRIDAY, NUMERO_SERIE, ENCAMINHADO, IA_SOBRE, IA_REGRAS,
+   OPCAO_CURSOS, OPCAO_CONTATOS, OPCAO_OUTROS
 };
