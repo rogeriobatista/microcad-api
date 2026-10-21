@@ -511,6 +511,9 @@ const PALAVRAS_CHAVE = [
    // So quando o cliente PEDE o numero de serie (perdeu, nao sabe,
    // quer receber); mencionar a serie em outra pergunta vai para a IA
    { re: /\b(perdi|perdeu|nao sei|nao tenho|nao lembro|esqueci|nao encontro|nao acho|como (consigo|recupero|recebo|pego|descubro|vejo)|quero|preciso|recuperar|reenviar|enviar|mandar)\b.*\b(serie|serial|licenca)\b/, texto: 'NUMERO_SERIE' },
+   // Download/atualizacao gratuita da versao que o cliente ja tem ->
+   // opcao 8 (antes de "atualizar", que leva a compra da V21)
+   { re: /(?=.*\b(download|baixar|instalador|gratuit[ao]|gratis)\b)(?=.*\batualiza(r|cao|coes)\b)/, opcao: '8' },
    { re: /\b(atualizar|atualizacao|atualizacoes)\b/, opcao: '5' },
    { re: /\b(video|videos|videoaula|videoaulas|aula|aulas)\b/, opcao: '9' },
    // Cursos: empresas parceiras (a Microcad nao oferece cursos)
