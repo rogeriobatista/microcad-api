@@ -120,7 +120,9 @@ https://www.amicrocad.com.br/topocad2000/verificar-versao
 Não sabe seu número de série? Receba por e-mail informando o CPF/CNPJ e o e-mail do cadastro:
 https://microcad.azurewebsites.net/envianserie
 
-Se tiver dúvida sobre qual versão você usa, responda por aqui informando o número de série.`,
+Se tiver dúvida sobre qual versão você usa, responda por aqui informando o número de série.
+
+Se você só quer a última atualização da sua versão, sem mudar para a V21: www.topocad2000.com.br > DOWNLOADS (V15 a V21), ou no programa, ícone M > tela MICROCAD - BR > botão VERIFICAR ATUALIZAÇÕES.`,
 
    "6": `Teste o TOPOCAD2000 V21 gratuitamente por 30 dias.
 
@@ -142,9 +144,17 @@ BricsCADs: 2020 ao 2026 (Pro) / Lite: Não compatível
 GstarCADs: 2020 ao 2027 (Professional, Standard e LT)
 ZWCADs: 2020 ao 2027 (Professional) / Standard: Não compatível`,
 
-   "8": `Lista completa de atualizações do TOPOCAD2000:
+   "8": `LISTA DE ATUALIZAÇÕES
 
-https://www.topocad2000.com.br/downloads/TOPOCAD2000.TXT`,
+Lista completa de atualizações do TOPOCAD2000:
+https://www.topocad2000.com.br/downloads/TOPOCAD2000.TXT
+
+Para instalar a última atualização da sua versão (V15 a V21):
+- No site: www.topocad2000.com.br > DOWNLOADS
+https://www.amicrocad.com.br/topocad2000-download
+- Ou no programa: ícone M > tela MICROCAD - BR > botão VERIFICAR ATUALIZAÇÕES
+
+Para mudar para a V21, digite 5.`,
 
    "9": `VIDEOAULAS
 
@@ -253,6 +263,7 @@ const IA_SOBRE = `SOBRE A MICROCAD E O TOPOCAD2000
 - Site: www.topocad2000.com.br (videoaulas, downloads, grupos de WhatsApp, parcerias, revendas e a página de cursos de empresas parceiras).
 - Videoaulas do TOPOCAD2000: gratuitas (opção 9), em https://www.amicrocad.com.br/topocad2000-videoaulas e pelo botão VÍDEO de cada comando.
 - A Microcad não oferece cursos. Cursos de topografia, georreferenciamento e GNSS são de empresas parceiras independentes (opção 10): https://www.amicrocad.com.br/topocad-cursos. A Microcad não organiza esses cursos nem responde por conteúdo, preços ou condições.
+- Última atualização da versão que o cliente já tem (V15 a V21): download em www.topocad2000.com.br > DOWNLOADS (https://www.amicrocad.com.br/topocad2000-download) ou, no programa, ícone M > tela MICROCAD - BR > botão VERIFICAR ATUALIZAÇÕES (opção 8). Mudar de versão para a V21 é a opção 5.
 - Black Friday: sim, teremos Black Friday em novembro. Não há outros detalhes para informar.`;
 
 const IA_REGRAS = `Você é o atendente virtual do WhatsApp comercial da MICROCAD (software TOPOCAD2000).
@@ -269,6 +280,7 @@ REGRAS OBRIGATÓRIAS:
 - Cliente diz que só aparecem 3 parcelas, ou pergunta como parcelar em mais de 3x: explique que na tela de pagamento da loja virtual ele deve escolher Mercado Pago (até 10x sem juros). Não encaminhe.
 - Dificuldade na loja virtual ou na verificação de versão do site (CPF não encontrado, cadastro antigo, pagamento que não conclui, link que não abre): não faça perguntas, comece com [ENCAMINHAR] e diga que nossa equipe vai verificar e retorna de segunda a sexta, das 9h às 18h.
 - Depois de encaminhar, se o cliente continuar escrevendo sobre o mesmo assunto, não faça novas perguntas: comece de novo com [ENCAMINHAR] e confirme em uma linha que nossa equipe vai ver a conversa completa e que ele pode acrescentar detalhes por aqui.
+- Cliente pede o download ou a última atualização da versão que já tem: indique www.topocad2000.com.br > DOWNLOADS (V15 a V21) e o botão VERIFICAR ATUALIZAÇÕES do programa (opção 8). Não encaminhe.
 - Pergunta sobre cursos ou treinamentos: diga que a Microcad não oferece cursos e indique a opção 10 (cursos de empresas parceiras); para aprender o TOPOCAD2000, indique as videoaulas gratuitas (opção 9). Não encaminhe.
 - Pergunta sobre Black Friday: responda apenas "Sim, teremos Black Friday em novembro." Não informe datas, descontos nem condições e não encaminhe.
 - Só use a marca [ENCAMINHAR] nesses casos. Quando a BASE responde a pergunta, responda normalmente, sem a marca.
