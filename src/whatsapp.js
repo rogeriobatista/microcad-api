@@ -152,6 +152,31 @@ function gravarHistorico() {
    }, HIST_ESPERA_MS);
    if (histTimer.unref) histTimer.unref();
 }
+
+// Marca de "lidas" do painel (data/hora ISO da ultima mensagem lida),
+// gravada ao lado do historico para valer depois do reinicio
+const LIDO_ARQ = HIST_ARQ ? HIST_ARQ.replace(/\.json$/i, '') + '-lidas.txt' : '';
+let lidoAte = '';
+function carregarLidas() {
+   if (!LIDO_ARQ) return;
+   try {
+      if (fs.existsSync(LIDO_ARQ)) lidoAte = fs.readFileSync(LIDO_ARQ, 'utf8').trim();
+   } catch (e) {
+      console.log('[WHATSAPP] Nao foi possivel ler a marca de lidas:', e.message);
+   }
+}
+function marcarLidas() {
+   lidoAte = conversas.length
+      ? conversas[conversas.length - 1].quando
+      : new Date().toISOString();
+   if (!LIDO_ARQ) return;
+   try {
+      fs.mkdirSync(path.dirname(LIDO_ARQ), { recursive: true });
+      fs.writeFileSync(LIDO_ARQ, lidoAte);
+   } catch (e) {
+      console.log('[WHATSAPP] Nao foi possivel gravar a marca de lidas:', e.message);
+   }
+}
 const JANELA_SAUDACAO_HORAS = 24; // nova conversa depois deste tempo
 const historicoIA = new Map(); // numero -> [{ role, content }]
 const usoIA = new Map(); // numero -> { dia, qtd }
@@ -173,6 +198,7 @@ function registrar(numero, nome, direcao, texto, origem) {
    gravarHistorico();
 }
 carregarHistorico();
+carregarLidas();
 
 // A Meta pode reenviar a mesma mensagem; responde so uma vez
 function jaProcessada(id) {
@@ -753,10 +779,19 @@ router.post('/api/whatsapp-webhook', async (req, res) => {
 // ----------------------------------------------------------------
 // GET /api/whatsapp-conversas?chave=microcad2026 - painel simples
 // ----------------------------------------------------------------
+// Por padrao mostra so as mensagens depois da ultima marcacao de
+// "lidas" (botao MARCAR TODAS COMO LIDAS); &todas=1 mostra todas.
+// As mensagens nao sao apagadas: o e-mail da IA usa o historico.
 router.get('/api/whatsapp-conversas', (req, res) => {
    if (req.query.chave !== PAINEL_CHAVE) return res.sendStatus(403);
 
-   const linhas = conversas.slice().reverse().map(c => {
+   const todas = req.query.todas === '1' || !lidoAte;
+   const lista = todas ? conversas : conversas.filter((c) => c.quando > lidoAte);
+   const base = `/api/whatsapp-conversas?chave=${encodeURIComponent(PAINEL_CHAVE)}`;
+   const lidoBR = lidoAte ? new Date(lidoAte).toLocaleString('pt-BR',
+      { timeZone: 'America/Sao_Paulo' }) : '';
+
+   const linhas = lista.slice().reverse().map(c => {
       const ehIA = c.origem === 'IA';
       const ehAviso = c.direcao === 'AVISO';
       const cor = ehAviso ? '#eeeeee' : (c.direcao === 'RECEBIDA'
@@ -780,12 +815,36 @@ router.get('/api/whatsapp-conversas', (req, res) => {
       `<body style="max-width:700px;margin:auto;padding:10px;` +
       `background:#fafafa">` +
       `<h3 style="font-family:Arial">WHATSAPP MICROCAD - ` +
-      `ULTIMAS MENSAGENS (${conversas.length})</h3>` +
+      (todas
+         ? `ULTIMAS MENSAGENS (${conversas.length})`
+         : `MENSAGENS NOVAS (${lista.length})`) + `</h3>` +
       `<p style="font-family:Arial;font-size:13px;color:#666">Horário de Brasília. ` +
-      `Em cinza: avisos do sistema (e-mails para a equipe).</p>` +
-      (linhas || '<p style="font-family:Arial">Nenhuma mensagem ainda.</p>') +
+      `Em cinza: avisos do sistema (e-mails para a equipe).` +
+      (lidoAte
+         ? (todas
+            ? ` Lidas até ${lidoBR}. <a href="${base}">Ver só as novas</a>`
+            : ` Lidas até ${lidoBR}. <a href="${base}&todas=1">Ver todas (${conversas.length})</a>`)
+         : '') +
+      `</p>` +
+      `<form method="post" action="/api/whatsapp-conversas/lidas?chave=` +
+      `${encodeURIComponent(PAINEL_CHAVE)}" style="margin:8px 0">` +
+      `<button type="submit" style="font-family:Arial;padding:6px 12px">` +
+      `MARCAR TODAS COMO LIDAS</button></form>` +
+      (linhas || `<p style="font-family:Arial">${todas
+         ? 'Nenhuma mensagem ainda.' : 'Nenhuma mensagem nova.'}</p>`) +
       `</body></html>`
    );
+});
+
+// ----------------------------------------------------------------
+// POST /api/whatsapp-conversas/lidas?chave=microcad2026
+// Marca tudo o que esta no painel como lido (nao apaga nada)
+// ----------------------------------------------------------------
+router.post('/api/whatsapp-conversas/lidas', (req, res) => {
+   if (req.query.chave !== PAINEL_CHAVE) return res.sendStatus(403);
+   marcarLidas();
+   return res.redirect(303,
+      `/api/whatsapp-conversas?chave=${encodeURIComponent(PAINEL_CHAVE)}`);
 });
 
 // ----------------------------------------------------------------
