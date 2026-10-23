@@ -550,6 +550,19 @@ const ENVIANSERIE_PAGINA = `<!DOCTYPE html>
 
 // =================== FIM ENVIA N.SERIE ===================
 
+// =================== TOTINS - LIMPEZA DE HABILITACOES INATIVAS ===================
+const TOTINS_DIAS_INATIVO = 180;                       // sem uso ha mais que isto: apaga antes de contar
+
+// data de corte no formato AAMMDD (o mesmo do udata/ndata da DADOSINS)
+const totinsDataCorte = (dias) => {
+   const d = new Date();
+   d.setDate(d.getDate() - dias);
+   const aa = String(d.getFullYear() % 100).padStart(2, '0');
+   const mm = String(d.getMonth() + 1).padStart(2, '0');
+   const dd = String(d.getDate()).padStart(2, '0');
+   return `${aa}${mm}${dd}`;
+};
+
 // =================== SUPORTE - ENVIADO DE DENTRO DO CAD (POST /apisuporte) ===================
 // O TOPOCAD2000 (comando SUPORTEMICROCAD / botao ENVIAR AO SUPORTE) monta um relatorio em
 // texto puro (SUPORTE-<serie>.TXT) e o MICROCADHTTP.EXE faz o POST dele aqui (text/plain, UTF-8).
@@ -1854,6 +1867,22 @@ www.topocad2000.com.br`,
    //TOTAL DADOSINS
    async totins(req, res) {
       const { id1 } = req.params; //nserie0
+      // 23/10/2026: antes de contar, apaga as habilitacoes da serie sem uso ha mais de TOTINS_DIAS_INATIVO dias
+      // (udata = AAMMDD do ultimo uso). PC formatado/trocado some sozinho e o usuario nao bate no limite.
+      // Nao apaga as bloqueadas (chave X). Se o PC antigo voltar a ser usado, o updins recria o registro.
+      try {
+         const corte = totinsDataCorte(TOTINS_DIAS_INATIVO);
+         const apagados = await TBLDadosins.destroy({
+            where: {
+               nserie0: id1,
+               udata: { [Op.and]: [{ [Op.like]: '______' }, { [Op.lt]: corte }] },
+               [Op.or]: [{ chave: null }, { chave: { [Op.notIn]: ['X', '5'] } }],
+            },
+         });
+         if (apagados > 0) console.log('TOTINS inativas apagadas', id1, apagados, 'corte', corte);
+      } catch (e) {
+         console.log('TOTINS limpeza falhou', id1, e.message);
+      }
       const totregistros = await TBLDadosins.count({ where: { nserie0: id1 } });
       return res.json(totregistros);
    }
