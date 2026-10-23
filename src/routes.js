@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import express, { Router } from 'express';
 import LicenseController from './app/controllers/LicenseController';
 import whatsappRouter from './whatsapp';
 import mcpRouter from './mcp';
@@ -91,6 +91,8 @@ routes.post('/apienvianserie',                         LicenseController.envians
 /** ENVIA LINK DO TESTE - pagina publica + envio por e-mail */
 routes.get('/envialink',                               LicenseController.envialinkPagina);
 routes.post('/apienvialink',                           LicenseController.envialink);
+// SUPORTE - relatorio enviado de dentro do CAD pelo MICROCADHTTP.EXE (corpo text/plain, ate 5 MB)
+routes.post('/apisuporte', express.text({ type: '*/*', limit: '5mb' }), LicenseController.suporte);
 routes.get('/teste/:id',                               LicenseController.teste);
 routes.get('/testex/:id',ensureToken,                  LicenseController.testex);
 
