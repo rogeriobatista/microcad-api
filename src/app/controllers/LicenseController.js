@@ -562,8 +562,13 @@ const ENVIANSERIE_PAGINA = `<!DOCTYPE html>
 //   NOME=...
 //   EMAIL=...            (e-mail para resposta, digitado/confirmado na tela)
 //   CAD=AutoCAD 2022 ...
+//   ANEXOS=nome (x MB); ...  (so informativo)
 //   ----- RELATO -----
 //   (texto digitado pelo usuario)
+//
+// COM ANEXOS o EXE manda JSON {relatorio, anexos:[{nome, base64}]} (express.json global, 50 MB);
+// SEM anexos manda text/plain (express.text na rota). E-mail em texto + HTML <pre>, porque o
+// Outlook junta as linhas do texto puro.
 //   ----- LOG DO CAD (ULTIMAS LINHAS) -----
 //   (janela de texto / F2)
 
@@ -572,6 +577,8 @@ const SUPORTE_COPIA = '';                              // copia de controle (vaz
 const SUPORTE_LIMITE = 5;                              // envios por numero de serie...
 const SUPORTE_JANELA_MS = 60 * 60 * 1000;              // ...a cada 60 minutos
 const SUPORTE_MAX_BYTES = 2 * 1024 * 1024;             // relatorio maior que isto e cortado
+const SUPORTE_ANEXOS_QTD = 10;                         // anexos por envio...
+const SUPORTE_ANEXOS_MB = 25;                          // ...e total em MB (o EXE limita em 20; o Gmail em 25)
 const suporteHistorico = new Map();                    // nserie -> [timestamps]
 
 const suporteBloqueado = (chave) => {
@@ -596,6 +603,8 @@ const suporteCabecalho = (texto) => {
    }
    return cab;
 };
+
+const suporteEscapa = (s) => String(s || '').replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
 
 const suporteEmailOk = (e) => e.length >= 5 && e.indexOf('@') > 0 && e.indexOf('.', e.indexOf('@')) > 0 && e.indexOf(' ') < 0;
 
@@ -1114,9 +1123,18 @@ class LicenseController {
    async suporte(req, res) {
       res.set('Content-Type', 'text/plain; charset=utf-8');
 
-      let texto = typeof req.body === 'string' ? req.body : '';
-      if (Buffer.isBuffer(req.body)) texto = req.body.toString('utf8');
-      texto = texto.replace(/^﻿/, '');
+      // CORPO: text/plain (so o relatorio) ou JSON {relatorio, anexos:[{nome, base64}]} (com anexos)
+      let texto = '';
+      let anexos = [];
+      if (typeof req.body === 'string') {
+         texto = req.body;
+      } else if (Buffer.isBuffer(req.body)) {
+         texto = req.body.toString('utf8');
+      } else if (req.body && typeof req.body === 'object') {
+         texto = String(req.body.relatorio || '');
+         if (Array.isArray(req.body.anexos)) anexos = req.body.anexos;
+      }
+      texto = texto.replace(/^\uFEFF/, '');
 
       if (texto.trim().length < 20) {
          return res.send('ERRO;RELATORIO VAZIO');
@@ -1139,13 +1157,32 @@ class LicenseController {
 
       const assunto = `SUPORTE ${programa} - ${nserie}${nome ? ' - ' + nome : ''}`;
 
+      // ANEXOS: nome limpo, base64 decodificado, no maximo SUPORTE_ANEXOS_QTD e SUPORTE_ANEXOS_MB no total
+      const attachments = [];
+      let totalAnexos = 0;
+      for (const a of anexos.slice(0, SUPORTE_ANEXOS_QTD)) {
+         if (!a || typeof a.base64 !== 'string') continue;
+         const filename = String(a.nome || 'anexo').replace(/[\\/:*?"<>|\r\n]/g, '_').substr(0, 120);
+         let content;
+         try { content = Buffer.from(a.base64, 'base64'); } catch (e) { continue; }
+         if (!content || content.length === 0) continue;
+         totalAnexos += content.length;
+         if (totalAnexos > SUPORTE_ANEXOS_MB * 1024 * 1024) {
+            console.log('SUPORTE anexos acima do limite', nserie, totalAnexos);
+            return res.send(`ERRO;ANEXOS ACIMA DE ${SUPORTE_ANEXOS_MB} MB NO TOTAL. REMOVA ARQUIVOS E ENVIE NOVAMENTE`);
+         }
+         attachments.push({ filename, content });
+      }
+
       const mailSuporte = {
          from: '"MICROCAD-Computação Grafica e Sistemas" <microcad.adm@gmail.com>',
          to: SUPORTE_EMAIL,
          subject: assunto,
          text: texto,
+         html: '<pre style="font-family:Consolas,Courier New,monospace;font-size:13px;white-space:pre-wrap">' + suporteEscapa(texto) + '</pre>',
          headers: { 'X-Suporte': `${nserie} | ${email || 'sem-email'} | ${cad || 'sem-cad'}` },
       };
+      if (attachments.length > 0) mailSuporte.attachments = attachments;
       if (suporteEmailOk(email)) mailSuporte.replyTo = email;
       if (SUPORTE_COPIA) mailSuporte.cc = SUPORTE_COPIA;
 
@@ -1190,7 +1227,7 @@ www.topocad2000.com.br`,
          }
       }
 
-      console.log('SUPORTE enviado', nserie, nome, '>>>', email, cad);
+      console.log('SUPORTE enviado', nserie, nome, '>>>', email, cad, attachments.length ? `anexos=${attachments.length} (${totalAnexos} bytes)` : '');
       return res.send(confirmado ? `OK;ENVIADO. CONFIRMACAO ENVIADA PARA ${email}` : 'OK;ENVIADO');
    }
 
