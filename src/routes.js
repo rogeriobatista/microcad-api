@@ -92,7 +92,7 @@ routes.post('/apienvianserie',                         LicenseController.envians
 routes.get('/envialink',                               LicenseController.envialinkPagina);
 routes.post('/apienvialink',                           LicenseController.envialink);
 // SUPORTE - relatorio enviado de dentro do CAD pelo MICROCADHTTP.EXE (corpo text/plain, ate 5 MB)
-routes.post('/apisuporte', express.text({ type: '*/*', limit: '5mb' }), LicenseController.suporte);
+routes.post('/apisuporte', express.text({ type: 'text/*', limit: '5mb' }), LicenseController.suporte); // JSON (com anexos) ja vem parseado pelo express.json do app.js
 routes.get('/teste/:id',                               LicenseController.teste);
 routes.get('/testex/:id',ensureToken,                  LicenseController.testex);
 
