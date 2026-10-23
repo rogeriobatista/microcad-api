@@ -550,6 +550,55 @@ const ENVIANSERIE_PAGINA = `<!DOCTYPE html>
 
 // =================== FIM ENVIA N.SERIE ===================
 
+// =================== SUPORTE - ENVIADO DE DENTRO DO CAD (POST /apisuporte) ===================
+// O TOPOCAD2000 (comando SUPORTEMICROCAD / botao ENVIAR AO SUPORTE) monta um relatorio em
+// texto puro (SUPORTE-<serie>.TXT) e o MICROCADHTTP.EXE faz o POST dele aqui (text/plain, UTF-8).
+// A API so repassa: e-mail para o suporte com o relatorio no corpo e Reply-To no usuario,
+// e um "recebemos" para o usuario. Nao grava em banco.
+//
+// FORMATO DO RELATORIO (primeiras linhas CHAVE=VALOR, depois os blocos):
+//   PROGRAMA=TOPOCAD2000 V21.59A
+//   NSERIE=T310291 A
+//   NOME=...
+//   EMAIL=...            (e-mail para resposta, digitado/confirmado na tela)
+//   CAD=AutoCAD 2022 ...
+//   ----- RELATO -----
+//   (texto digitado pelo usuario)
+//   ----- LOG DO CAD (ULTIMAS LINHAS) -----
+//   (janela de texto / F2)
+
+const SUPORTE_EMAIL = process.env.SUPORTE_EMAIL || 'contato@topocad2000.com.br'; // destino do relatorio
+const SUPORTE_COPIA = '';                              // copia de controle (vazio = sem copia)
+const SUPORTE_LIMITE = 5;                              // envios por numero de serie...
+const SUPORTE_JANELA_MS = 60 * 60 * 1000;              // ...a cada 60 minutos
+const SUPORTE_MAX_BYTES = 2 * 1024 * 1024;             // relatorio maior que isto e cortado
+const suporteHistorico = new Map();                    // nserie -> [timestamps]
+
+const suporteBloqueado = (chave) => {
+   const agora = Date.now();
+   const lista = (suporteHistorico.get(chave) || []).filter(t => agora - t < SUPORTE_JANELA_MS);
+   if (lista.length >= SUPORTE_LIMITE) {
+      suporteHistorico.set(chave, lista);
+      return true;
+   }
+   lista.push(agora);
+   suporteHistorico.set(chave, lista);
+   return false;
+};
+
+// le "CHAVE=VALOR" nas linhas do cabecalho (para antes do primeiro bloco "-----")
+const suporteCabecalho = (texto) => {
+   const cab = {};
+   for (const linha of texto.split(/\r?\n/)) {
+      if (linha.startsWith('-----')) break;
+      const i = linha.indexOf('=');
+      if (i > 0) cab[linha.substr(0, i).trim().toUpperCase()] = linha.substr(i + 1).trim();
+   }
+   return cab;
+};
+
+const suporteEmailOk = (e) => e.length >= 5 && e.indexOf('@') > 0 && e.indexOf('.', e.indexOf('@')) > 0 && e.indexOf(' ') < 0;
+
 // =================== ENVIA LINK DO TESTE (pagina publica /envialink) ===================
 // Para quem chega pelo celular na pagina de download do site: informa nome + e-mail
 // e recebe o link do instalador do TOPOCAD2000 V21 (teste de 30 dias) por e-mail.
@@ -1058,6 +1107,91 @@ class LicenseController {
          cod: 'ENVIADO',
          msg: `Link enviado para ${email}.\nAbra o e-mail no computador onde vai instalar.\nVerifique também a caixa de SPAM.`,
       });
+   }
+
+   // SUPORTE - relatorio enviado de dentro do CAD (POST /apisuporte, corpo text/plain)
+   // Resposta em texto puro, uma linha, no padrao do MICROCADHTTP.EXE: "OK;..." ou "ERRO;..."
+   async suporte(req, res) {
+      res.set('Content-Type', 'text/plain; charset=utf-8');
+
+      let texto = typeof req.body === 'string' ? req.body : '';
+      if (Buffer.isBuffer(req.body)) texto = req.body.toString('utf8');
+      texto = texto.replace(/^﻿/, '');
+
+      if (texto.trim().length < 20) {
+         return res.send('ERRO;RELATORIO VAZIO');
+      }
+      if (Buffer.byteLength(texto, 'utf8') > SUPORTE_MAX_BYTES) {
+         texto = texto.substr(0, SUPORTE_MAX_BYTES) + '\n\n[RELATORIO CORTADO EM 2 MB]';
+      }
+
+      const cab = suporteCabecalho(texto);
+      const programa = (cab.PROGRAMA || 'TOPOCAD2000').substr(0, 40);
+      const nserie   = (cab.NSERIE   || 'SEM SERIE').substr(0, 20);
+      const nome     = (cab.NOME     || '').substr(0, 80);
+      const email    = (cab.EMAIL    || '').trim().toLowerCase().substr(0, 120);
+      const cad      = (cab.CAD      || '').substr(0, 60);
+
+      if (suporteBloqueado(nserie)) {
+         console.log('SUPORTE limite', nserie, email);
+         return res.send('ERRO;LIMITE DE ENVIOS ATINGIDO. AGUARDE 1 HORA OU ESCREVA PARA ' + SUPORTE_EMAIL);
+      }
+
+      const assunto = `SUPORTE ${programa} - ${nserie}${nome ? ' - ' + nome : ''}`;
+
+      const mailSuporte = {
+         from: '"MICROCAD-Computação Grafica e Sistemas" <microcad.adm@gmail.com>',
+         to: SUPORTE_EMAIL,
+         subject: assunto,
+         text: texto,
+         headers: { 'X-Suporte': `${nserie} | ${email || 'sem-email'} | ${cad || 'sem-cad'}` },
+      };
+      if (suporteEmailOk(email)) mailSuporte.replyTo = email;
+      if (SUPORTE_COPIA) mailSuporte.cc = SUPORTE_COPIA;
+
+      try {
+         const transporter = nodemailer.createTransport(emailConfig);
+         await transporter.sendMail(mailSuporte);
+      } catch (e) {
+         console.log('SUPORTE falha envio', nserie, email, e.message);
+         return res.send('ERRO;NAO FOI POSSIVEL ENVIAR. TENTE MAIS TARDE OU ESCREVA PARA ' + SUPORTE_EMAIL);
+      }
+
+      // confirmacao para o usuario (se o e-mail for valido); falha aqui nao invalida o envio
+      let confirmado = false;
+      if (suporteEmailOk(email)) {
+         const corpo = (cab.PROGRAMA ? programa : 'TOPOCAD2000');
+         const mailUsuario = {
+            from: '"MICROCAD-Computação Grafica e Sistemas" <microcad.adm@gmail.com>',
+            to: email,
+            replyTo: SUPORTE_EMAIL,
+            subject: `Recebemos sua solicitação de suporte - ${corpo} - ${nserie}`,
+            text:
+`Recebemos a sua solicitação de suporte enviada pelo ${corpo}.
+
+Número de série: ${nserie}
+${nome ? 'Nome: ' + nome + '\n' : ''}${cad ? 'CAD: ' + cad + '\n' : ''}
+O suporte é feito por e-mail, de segunda a sexta-feira, das 10:00 às 17:00 h.
+A resposta será enviada para este e-mail (${email}).
+Verifique também a caixa de SPAM.
+
+Se quiser complementar, responda este e-mail com prints ou arquivos.
+
+Microcad Computação Gráfica
+${SUPORTE_EMAIL}
+www.topocad2000.com.br`,
+         };
+         try {
+            const transporter = nodemailer.createTransport(emailConfig);
+            await transporter.sendMail(mailUsuario);
+            confirmado = true;
+         } catch (e) {
+            console.log('SUPORTE falha confirmacao', nserie, email, e.message);
+         }
+      }
+
+      console.log('SUPORTE enviado', nserie, nome, '>>>', email, cad);
+      return res.send(confirmado ? `OK;ENVIADO. CONFIRMACAO ENVIADA PARA ${email}` : 'OK;ENVIADO');
    }
 
    async registronet(req, res) {
